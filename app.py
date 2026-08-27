@@ -9,8 +9,20 @@ st.set_page_config(
     layout="wide"
 )
 
-# Groq API Bağlantısı (Streamlit Secrets veya Ortam Değişkeni)
-groq_api_key = st.secrets.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY")
+# API Anahtarı Tanımlaması
+GROQ_API_KEY = "gsk_..."  # Kendi Groq API anahtarınızı buraya yazabilirsiniz
+
+# Groq API Bağlantısı Güvenli Kontrolü
+groq_api_key = GROQ_API_KEY
+
+if not groq_api_key:
+    if "GROQ_API_KEY" in os.environ:
+        groq_api_key = os.environ["GROQ_API_KEY"]
+    else:
+        try:
+            groq_api_key = st.secrets.get("GROQ_API_KEY")
+        except Exception:
+            groq_api_key = None
 
 if groq_api_key:
     client = Groq(api_key=groq_api_key)
@@ -108,5 +120,4 @@ with tab1:
                 except Exception as e:
                     st.error(f"Yanıt üretilirken bir hata oluştu: {e}")
         else:
-            with st.chat_message("assistant"):
-                st.warning("API Anahtarı bulunamadı! Lütfen Streamlit Cloud Secrets ayarlarınızı kontrol edin.")
+            st.error("API Anahtarı bulunamadı! Lütfen geçerli bir Groq API anahtarı girin.")
