@@ -15,7 +15,7 @@ st.set_page_config(
 
 # --- SECRETS İLE GÜVENLİ API ANAHTARI BAĞLANTISI ---
 try:
-    GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
+    GROQ_API_KEY = st.secrets["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"]
     client = Groq(api_key=GROQ_API_KEY)
 except Exception:
     st.error("⚠️ API Anahtarı eksik! Lütfen Streamlit Cloud Secrets veya .streamlit/secrets.toml dosyasına 'GROQ_API_KEY' ekleyin.")
