@@ -111,7 +111,7 @@ with tab1:
             with st.chat_message("assistant"):
                 try:
                     completion = client.chat.completions.create(
-                        model="llama-3.3-70b-versatile",
+                        model="llama3-70b-8192",
                         messages=[
                             {
                                 "role": "system",
