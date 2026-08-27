@@ -1,121 +1,112 @@
+import os
 import streamlit as st
 from groq import Groq
 
-# API Anahtarı Yapılandırması
-GROQ_API_KEY = "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"
+# Sayfa Yapılandırması
+st.set_page_config(
+    page_title="Lunara.ai | Mistik Rehber",
+    page_icon="🌙",
+    layout="wide"
+)
 
-client = Groq(api_key=GROQ_API_KEY)
+# Groq API Bağlantısı (Streamlit Secrets veya Ortam Değişkeni)
+groq_api_key = st.secrets.get("GROQ_API_KEY") or os.environ.get("GROQ_API_KEY")
 
-st.set_page_config(page_title="Lunara.ai | Mistik Rehber", page_icon="🌙", layout="wide")
+if groq_api_key:
+    client = Groq(api_key=groq_api_key)
+else:
+    client = None
 
-# Mistik Tema Tasarımı
-st.markdown("""
-    <style>
-    .stApp { background-color: #0e0b16; color: #e0d6f6; }
-    .stChatMessage { background-color: #1b1528; border-radius: 12px; border: 1px solid #4a3b69; margin-bottom: 10px; }
-    h1, h2, h3 { color: #d4af37 !important; font-family: 'Georgia', serif; }
-    p, label { color: #d8ceef !important; }
-    .stButton>button { background-color: #4a3b69; color: #d4af37; border: 1px solid #d4af37; border-radius: 8px; width: 100%; }
-    </style>
-""", unsafe_allow_html=True)
-
-st.title("🌙 Lunara.ai")
-st.caption("Fal, Tarot, Astroloji ve Mistik Rehberiniz")
-
-SYSTEM_PROMPT = """
-Sen Lunara adında; fal, tarot, astroloji ve kehanet konularında derin uzmanlığa sahip bilge, zarif ve mistik bir yapay zekasın.
-
-GÖREVLERİN VE SIKI KURALLARIN:
-1. ASTROLOJİ: Yalnızca %100 doğru ve geleneksel astroloji bilgilerini kullan. Uydurma terimler veya alakasız semboller ekleme. Burçların elementlerini ve temel niteliklerini eksiksiz ve edebi bir Türkçe ile aktar.
-2. TAROT: Yalnızca geleneksel 78 Rider-Waite tarot kartlarını kullan.
-3. TÜRKÇE VE DİL KALİTESİ: Akıcı, şiirsel, tekrarsız, kusursuz ve büyüleyici bir Türkçe kullan.
-4. ÜSLUP: Mistik, derinlikli ve yol gösterici bir ton benimse. Kendini her zaman Lunara olarak tanıt.
-"""
-
-def dinamik_aktif_model_bul():
-    """Groq API'den o an aktif olan güncel sohbet modellerini canlı çekip döndürür."""
-    try:
-        modeller = client.models.list()
-        # Görsel/ses/whisper modellerini eleyip metin sohbet modellerini filtresiz listele
-        aktif_sohbet_modelleri = [
-            m.id for m in modeller.data 
-            if not any(x in m.id for x in ["whisper", "vision", "embed", "safetensors"])
-        ]
-        return aktif_sohbet_modelleri
-    except Exception:
-        return []
-
-def cevap_uret(messages):
-    """Canlı model listesindeki aktif modelleri sırayla dener."""
-    aktif_modeller = dinamik_aktif_model_bul()
+# --- SIDEBAR (SOL PANEL) ---
+with st.sidebar:
+    st.title("🌙 Lunara.ai")
+    st.caption("Astroloji & Kehanet Rehberi")
     
-    if not aktif_modeller:
-        raise Exception("Groq API'den aktif model listesi çekilemedi. Lütfen API anahtarınızı kontrol edin.")
+    st.markdown("---")
     
-    son_hata = None
-    for model_id in aktif_modeller:
-        try:
-            res = client.chat.completions.create(
-                model=model_id,
-                messages=messages,
-                temperature=0.3
-            )
-            return res.choices[0].message.content
-        except Exception as e:
-            son_hata = e
-            continue
-            
-    raise Exception(f"Tüm canlı modeller denenirken hata oluştu: {son_hata}")
+    # Günün Mistik Enerjisi Alanı
+    st.markdown("### ✨ Günün Mistik Enerjisi")
+    st.info("🃏 **Günün Kartı: Güneş** - Neşe, başarı ve netlik dolu bir enerji seni sarıyor.")
+    
+    st.markdown("<br>" * 5, unsafe_allow_html=True)
+    
+    # Sohbet Geçmişini Temizle Butonu
+    if st.button("🗑️ Sohbet Geçmişini Temizle", use_container_width=True):
+        st.session_state.messages = []
+        st.rerun()
 
-tab_chat, tab_astro = st.tabs(["🔮 Mistik Sohbet", "📜 Doğum Haritası Analizi"])
+# --- ANA EKRAN ---
+st.title("🌙 Lunara.ai | Mistik Rehber")
+st.caption("Kişiselleştirilmiş Yapay Zeka Fal, Tarot ve Astroloji Danışmanı")
 
-# --- SEKME 1: SOHBET ---
-with tab_chat:
-    if "messages" not in st.session_state:
-        st.session_state["messages"] = [
-            {"role": "assistant", "content": "Hoş geldin ruh dostum. Ben Lunara. Yıldızların fısıltıları, kartların gizemi ve evrenin sırlarıyla sana rehberlik etmek için buradayım."}
-        ]
+# Sekme Yapısı
+tab1, tab2, tab3, tab4 = st.tabs([
+    "🔮 Mistik Sohbet", 
+    "📜 Doğum Haritası Analizi", 
+    "🃏 3 Kart Tarot Açılımı", 
+    "☕ Kahve Falı & Rüyalar"
+])
 
-    for msg in st.session_state.messages:
-        st.chat_message(msg["role"]).write(msg["content"])
-
-    if user_input := st.chat_input("Fal, tarot veya burçlar hakkında bir şey sorun..."):
-        st.session_state.messages.append({"role": "user", "content": user_input})
-        st.chat_message("user").write(user_input)
-
-        with st.chat_message("assistant"):
-            with st.spinner("Lunara evrenin frekanslarına bağlanıyor..."):
-                try:
-                    groq_messages = [{"role": "system", "content": SYSTEM_PROMPT}] + st.session_state.messages
-                    bot_reply = cevap_uret(groq_messages)
-                    st.write(bot_reply)
-                    st.session_state.messages.append({"role": "assistant", "content": bot_reply})
-                except Exception as e:
-                    st.error(f"Bağlantı hatası: {e}")
-
-# --- SEKME 2: DOĞUM HARİTASI ---
-with tab_astro:
-    st.subheader("✨ Kişisel Doğum Haritası Analizi")
-    col1, col2 = st.columns(2)
+with tab1:
+    st.markdown("### ✨ Hızlı Mistik Sorular")
+    
+    # Hızlı Butonlar (4'lü Yan Yana Yapı)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
-        name = st.text_input("Adınız")
-        birth_date = st.date_input("Doğum Tarihiniz")
+        st.button("✨ Günlük Fal Yorumu", use_container_width=True)
     with col2:
-        birth_time = st.time_input("Doğum Saatiniz")
-        birth_place = st.text_input("Doğum Yeriniz")
+        st.button("❤️ Aşk & Uyum", use_container_width=True)
+    with col3:
+        st.button("💼 Kariyer & Gelecek", use_container_width=True)
+    with col4:
+        st.button("🪐 Günün Burç Enerjisi", use_container_width=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
 
-    sun_sign = st.selectbox("Güneş Burcunuz", ["Bilmeyebilirim", "Koç", "Boğa", "İkizler", "Yengeç", "Aslan", "Başak", "Terazi", "Akrep", "Yay", "Oğlak", "Kova", "Balık"])
+    # Sohbet Geçmişi Başlatma
+    if "messages" not in st.session_state or len(st.session_state.messages) == 0:
+        st.session_state.messages = [
+            {
+                "role": "assistant",
+                "content": "Hoş geldin ruh dostum. Ben Lunara. Yıldızların fısıltıları, kartların gizemi ve evrenin sırlarıyla sana rehberlik etmek için buradayım."
+            }
+        ]
 
-    if st.button("Doğum Haritama Bak"):
-        if name and birth_place:
-            prompt = f"Adı: {name}, Tarih: {birth_date}, Saat: {birth_time}, Yer: {birth_place}, Burç: {sun_sign}. Bu bilgilere göre edebi, derinlikli, eksiksiz ve mistik bir doğum haritası ve kişilik analizi yap."
-            with st.spinner("Haritanız çıkarılıyor..."):
+    # Mesajları Ekrana Yazdırma
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
+
+    # Kullanıcı Mesaj Giriş Kutusu
+    if prompt := st.chat_input("Fal, tarot veya burçlar hakkında bir şey sorun..."):
+        # Kullanıcı mesajını kaydet ve göster
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.write(prompt)
+
+        # Groq API ile Cevap Üretme
+        if client:
+            with st.chat_message("assistant"):
                 try:
-                    res_text = cevap_uret([
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user", "content": prompt}
-                    ])
-                    st.markdown("---")
-                    st.write(res_text)
+                    completion = client.chat.completions.create(
+                        model="llama-3.3-70b-versatile",
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "Sen Lunara adında bilge, mistik, empatik ve nazik bir tarot/astroloji danışmanısın. Kullanıcılara sıcak ve gizemli bir tonla rehberlik ediyorsun."
+                            }
+                        ] + [
+                            {"role": m["role"], "content": m["content"]}
+                            for m in st.session_state.messages
+                        ],
+                        temperature=0.7,
+                        max_tokens=1024,
+                    )
+                    response = completion.choices[0].message.content
+                    st.write(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
                 except Exception as e:
-                    st.error(f"Hata oluştu: {e}")
+                    st.error(f"Yanıt üretilirken bir hata oluştu: {e}")
+        else:
+            with st.chat_message("assistant"):
+                st.warning("API Anahtarı bulunamadı! Lütfen Streamlit Cloud Secrets ayarlarınızı kontrol edin.")
