@@ -9,11 +9,11 @@ st.set_page_config(
     layout="wide"
 )
 
-# API Anahtarı Tanımlaması
-GROQ_API_KEY = "gsk_..."  # Kendi Groq API anahtarınızı buraya yazabilirsiniz
+# API Anahtarı Tanımlaması (Tırnak içine kendi Groq API anahtarını yapıştır)
+GROQ_API_KEY = "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"
 
 # Groq API Bağlantısı Güvenli Kontrolü
-groq_api_key = GROQ_API_KEY
+groq_api_key = GROQ_API_KEY if GROQ_API_KEY != "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" else None
 
 if not groq_api_key:
     if "GROQ_API_KEY" in os.environ:
@@ -62,16 +62,22 @@ tab1, tab2, tab3, tab4 = st.tabs([
 with tab1:
     st.markdown("### ✨ Hızlı Mistik Sorular")
     
-    # Hızlı Butonlar (4'lü Yan Yana Yapı)
+    # Hızlı Butonlar ve İşlevleri
+    prompt_to_send = None
     col1, col2, col3, col4 = st.columns(4)
+    
     with col1:
-        st.button("✨ Günlük Fal Yorumu", use_container_width=True)
+        if st.button("✨ Günlük Fal Yorumu", use_container_width=True):
+            prompt_to_send = "Bana bugüne özel genel bir mistik fal yorumu ve rehberlik yapar mısın?"
     with col2:
-        st.button("❤️ Aşk & Uyum", use_container_width=True)
+        if st.button("❤️ Aşk & Uyum", use_container_width=True):
+            prompt_to_send = "Aşk hayatım ve ilişkilerdeki enerjim hakkında mistik bir değerlendirme yapar mısın?"
     with col3:
-        st.button("💼 Kariyer & Gelecek", use_container_width=True)
+        if st.button("💼 Kariyer & Gelecek", use_container_width=True):
+            prompt_to_send = "Kariyerim, maddi durumum ve geleceğimle ilgili yıldızların tavsiyesi nedir?"
     with col4:
-        st.button("🪐 Günün Burç Enerjisi", use_container_width=True)
+        if st.button("🪐 Günün Burç Enerjisi", use_container_width=True):
+            prompt_to_send = "Bugünün gökyüzü konumları ve gezegen enerjileri bana nasıl yansıyor?"
     
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -80,21 +86,25 @@ with tab1:
         st.session_state.messages = [
             {
                 "role": "assistant",
-                "content": "Hoş geldin ruh dostum. Ben Lunara. Yıldızların fısıltıları, kartların gizemi ve evrenin sırlarıyla sana rehberlik etmek için buradayım."
+                "content": "Hoş geldin. Ben Lunara. Yıldızların fısıltıları, kartların gizemi ve evrenin sırlarıyla sana rehberlik etmek için buradayım."
             }
         ]
+
+    # Kullanıcı Manuel Giriş Yaparsa Algıla
+    if user_chat_input := st.chat_input("Fal, tarot veya burçlar hakkında bir şey sorun..."):
+        prompt_to_send = user_chat_input
 
     # Mesajları Ekrana Yazdırma
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    # Kullanıcı Mesaj Giriş Kutusu
-    if prompt := st.chat_input("Fal, tarot veya burçlar hakkında bir şey sorun..."):
-        # Kullanıcı mesajını kaydet ve göster
-        st.session_state.messages.append({"role": "user", "content": prompt})
+    # Bir Soru Tetiklendiğinde Çalışacak Alan (Girdi veya Buton)
+    if prompt_to_send:
+        # Kullanıcı mesajını ekle
+        st.session_state.messages.append({"role": "user", "content": prompt_to_send})
         with st.chat_message("user"):
-            st.write(prompt)
+            st.write(prompt_to_send)
 
         # Groq API ile Cevap Üretme
         if client:
@@ -117,6 +127,7 @@ with tab1:
                     response = completion.choices[0].message.content
                     st.write(response)
                     st.session_state.messages.append({"role": "assistant", "content": response})
+                    st.rerun()
                 except Exception as e:
                     st.error(f"Yanıt üretilirken bir hata oluştu: {e}")
         else:
