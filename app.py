@@ -9,11 +9,11 @@ st.set_page_config(
     layout="wide"
 )
 
-# API Anahtarı Tanımlaması (Tırnak içine kendi Groq API anahtarını yapıştır)
+# API Anahtarı Tanımlaması
 GROQ_API_KEY = "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"
 
 # Groq API Bağlantısı Güvenli Kontrolü
-groq_api_key = GROQ_API_KEY if GROQ_API_KEY != "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" else None
+groq_api_key = GROQ_API_KEY
 
 if not groq_api_key:
     if "GROQ_API_KEY" in os.environ:
