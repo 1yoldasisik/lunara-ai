@@ -12,7 +12,7 @@ st.set_page_config(
 # API Anahtarı Tanımlaması
 GROQ_API_KEY = "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"
 
-# Groq API Bağlantısı Güvenli Kontrolü
+# Groq API Bağlantısı Kontrolü
 groq_api_key = GROQ_API_KEY if GROQ_API_KEY else None
 
 if not groq_api_key:
@@ -28,6 +28,29 @@ if groq_api_key:
     client = Groq(api_key=groq_api_key)
 else:
     client = None
+
+def get_active_groq_model(groq_client):
+    """
+    Groq API'den aktif olan modelleri dinamik çeker. 
+    Öncelikli modellere göre en uygun olanını seçerek 404/400 hatalarını engeller.
+    """
+    priority_models = [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-8b-instant",
+        "llama3-70b-8192",
+        "llama3-8b-8192"
+    ]
+    try:
+        available_models = [m.id for m in groq_client.models.list().data]
+        for pm in priority_models:
+            if pm in available_models:
+                return pm
+        # Öncelikli listede yoksa mevcut modeller arasından ilk llama modelini seç
+        llama_models = [m for m in available_models if "llama" in m.lower()]
+        return llama_models[0] if llama_models else available_models[0]
+    except Exception:
+        # Fallback varsayılan model
+        return "llama-3.3-70b-versatile"
 
 # --- SIDEBAR (SOL PANEL) ---
 with st.sidebar:
@@ -110,8 +133,9 @@ with tab1:
         if client:
             with st.chat_message("assistant"):
                 try:
+                    active_model = get_active_groq_model(client)
                     completion = client.chat.completions.create(
-                        model="llama-3.1-8b-instant",
+                        model=active_model,
                         messages=[
                             {
                                 "role": "system",
