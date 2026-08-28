@@ -13,7 +13,7 @@ st.set_page_config(
 GROQ_API_KEY = "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"
 
 # Groq API Bağlantısı Güvenli Kontrolü
-groq_api_key = GROQ_API_KEY
+groq_api_key = GROQ_API_KEY if GROQ_API_KEY else None
 
 if not groq_api_key:
     if "GROQ_API_KEY" in os.environ:
@@ -99,9 +99,9 @@ with tab1:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    # Bir Soru Tetiklendiğinde Çalışacak Alan (Girdi veya Buton)
+    # Bir Soru Tetiklendiğinde Çalışacak Alan
     if prompt_to_send:
-        # Kullanıcı mesajını ekle
+        # Kullanıcı mesajını ekle ve göster
         st.session_state.messages.append({"role": "user", "content": prompt_to_send})
         with st.chat_message("user"):
             st.write(prompt_to_send)
@@ -127,7 +127,6 @@ with tab1:
                     response = completion.choices[0].message.content
                     st.write(response)
                     st.session_state.messages.append({"role": "assistant", "content": response})
-                    st.rerun()
                 except Exception as e:
                     st.error(f"Yanıt üretilirken bir hata oluştu: {e}")
         else:
