@@ -10,8 +10,8 @@ st.set_page_config(
 )
 
 # --- API ANAHTARI YÖNETİMİ ---
-GROQ_API_KEY = "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"
-
+# Güvenlik nedeniyle API anahtarı koddan temizlenmiştir. 
+# Sırasıyla Streamlit Secrets veya Ortam Değişkenlerinden (Environment Variable) okunur.
 groq_api_key = None
 try:
     if "GROQ_API_KEY" in st.secrets:
@@ -20,7 +20,7 @@ except Exception:
     pass
 
 if not groq_api_key:
-    groq_api_key = os.environ.get("GROQ_API_KEY", GROQ_API_KEY)
+    groq_api_key = os.environ.get("GROQ_API_KEY", "")
 
 # Groq İstemcisi Başlatma
 if groq_api_key:
@@ -54,7 +54,7 @@ def get_active_groq_model(groq_client):
 def send_prompt_to_ai(prompt_text, system_instruction):
     """Merkezi AI Yanıt Üretme ve State Yönetimi"""
     if not client:
-        st.error("🔑 API Anahtarı bulunamadı! Lütfen geçerli bir GROQ_API_KEY tanımlayın.")
+        st.error("🔑 API Anahtarı bulunamadı! Lütfen Streamlit Secrets alanına GROQ_API_KEY anahtarınızı tanımlayın.")
         return
 
     st.session_state.messages.append({"role": "user", "content": prompt_text})
