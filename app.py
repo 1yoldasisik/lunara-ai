@@ -181,4 +181,5 @@ with tab4:
     st.markdown("### ☕ Kahve Falı & Rüyalar")
     st.write("Gördüğün sembolleri, fincanındaki imgeleri veya rüyalarını anlat.")
 
-    dream_input = st.text_area("Fincanındaki sembolleri veya gördüğün rüyayı detaylıca
+    dream_input = st.text_area("Fincanındaki sembolleri veya gördüğün rüyayı detaylıca yaz:", placeholder="Örn: Rüyamda berrak bir denizin üstünde uçuyordum...")
+
