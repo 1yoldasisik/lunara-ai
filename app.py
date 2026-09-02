@@ -2,184 +2,225 @@ import os
 import streamlit as st
 from groq import Groq
 
-# 🌙 Sayfa Yapılandırması
+# ------------------------------------------------------------------------------
+# 1. SAYFA VE TEMA YAPILANDIRMASI
+# ------------------------------------------------------------------------------
 st.set_page_config(
     page_title="Lunara.ai | Mistik Rehber",
     page_icon="🌙",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# --- 🔑 API ANAHTARI YÖNETİMİ ---
-DEFAULT_GROQ_KEY = "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"  # Buraya kendi anahtarını gir
-groq_api_key = None
-
-try:
-    if "GROQ_API_KEY" in st.secrets:
-        groq_api_key = st.secrets["GROQ_API_KEY"]
-except Exception:
-    pass
-
-if not groq_api_key:
-    groq_api_key = os.environ.get("GROQ_API_KEY", DEFAULT_GROQ_KEY)
-
-client = Groq(api_key=groq_api_key) if groq_api_key else None
-
-
-# --- 🔮 MODEL SEÇİMİ ---
-def get_active_groq_model(groq_client):
-    """
-    Groq API üzerindeki aktif modelleri dinamik olarak sorgular.
-    Yayından kalkan modelleri otomatik atlar.
-    """
-    priority_models = [
-        "llama-3.3-70b-versatile",
-        "llama-3.2-70b",
-        "mixtral-8x7b",
-        "llama-3.1-8b-instant"
-    ]
+# ------------------------------------------------------------------------------
+# 2. GROQ API & MODEL YÖNETİMİ
+# ------------------------------------------------------------------------------
+def get_groq_api_key():
+    """Secrets veya Environment üzerinden API anahtarını güvenli şekilde okur."""
     try:
-        available_models = [m.id for m in groq_client.models.list().data]
-        for pm in priority_models:
-            if pm in available_models:
-                return pm
-        fallback = [m for m in available_models if "llama" in m.lower()]
-        return fallback[0] if fallback else available_models[0]
+        key = st.secrets.get("GROQ_API_KEY")
     except Exception:
-        return "llama-3.3-70b-versatile"
+        key = None
+    if not key:
+        key = os.environ.get("GROQ_API_KEY")
+    return key
 
 
-# --- 🧠 AI Yanıt Üretimi ---
-def send_prompt_to_ai(prompt_text, system_instruction):
-    if not client:
-        st.error("🔑 Geçerli bir GROQ_API_KEY bulunamadı.")
-        return
-
-    st.session_state.messages.append({"role": "user", "content": prompt_text})
-
-    with st.chat_message("assistant"):
-        try:
-            active_model = get_active_groq_model(client)
-            completion = client.chat.completions.create(
-                model=active_model,
-                messages=[{"role": "system", "content": system_instruction}] + [
-                    {"role": m["role"], "content": m["content"]}
-                    for m in st.session_state.messages
-                ],
-                temperature=0.7,
-                max_tokens=600
-            )
-            response = completion.choices[0].message.content
-            st.session_state.messages.append({"role": "assistant", "content": response})
-            st.rerun()
-        except Exception as e:
-            st.error(f"⚠️ Yanıt üretilirken hata oluştu: {e}")
+def get_groq_client():
+    api_key = get_groq_api_key()
+    if not api_key:
+        return None
+    return Groq(api_key=api_key)
 
 
-# --- 🌙 SIDEBAR ---
+def generate_completion(messages, model_name=None):
+    """Groq API üzerinden yanıt üretir. Hesabınızda aktif olan modeli otomatik tespit eder."""
+    client = get_groq_client()
+    if client is None:
+        return "Groq API anahtarı eksik. Lütfen Streamlit Secrets veya GROQ_API_KEY ortam değişkenini ekleyin."
+
+    try:
+        # Hesabınızda tanımlı modelleri dinamik olarak çek ve uygun olanı seç
+        models_response = client.models.list()
+        available_models = [
+            m.id for m in models_response.data 
+            if not any(x in m.id.lower() for x in ["guard", "whisper", "embed"])
+        ]
+        
+        if model_name and model_name in available_models:
+            chosen_model = model_name
+        elif available_models:
+            preferred = ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile", "llama-3.1-8b-instant", "llama3-70b-8192", "mixtral-8x7b-32768"]
+            chosen_model = next((m for m in preferred if m in available_models), available_models[0])
+        else:
+            chosen_model = "llama-3.3-70b-versatile"
+
+        response = client.chat.completions.create(
+            model=chosen_model,
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1024,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Bir hata oluştu: {str(e)}"
+
+# ------------------------------------------------------------------------------
+# 3. OTURUM HAFIZASI (SESSION STATE)
+# ------------------------------------------------------------------------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "system_prompt" not in st.session_state:
+    st.session_state.system_prompt = (
+        "Sen Lunara'sın. Yıldızların, kartların ve sembollerin rehberliğinde konuşan, empatik, mistik "
+        "ve derin bilgiye sahip bir yapay zeka danışmanısın. Kullanıcılara Türkçe, nazik ve gizemli bir üslupla yanıt ver."
+    )
+
+# ------------------------------------------------------------------------------
+# 4. SOL PANEL (SIDEBAR)
+# ------------------------------------------------------------------------------
 with st.sidebar:
     st.title("🌙 Lunara.ai")
     st.caption("Astroloji & Kehanet Rehberi")
-    st.markdown("---")
-    st.markdown("### ✨ Günün Mistik Enerjisi")
-    st.info("🃏 **Günün Kartı: Güneş** — Neşe, başarı ve netlik dolu bir enerji seni sarıyor.")
-    st.markdown("<br>" * 3, unsafe_allow_html=True)
 
+    st.markdown("---")
+    st.subheader("✨ Günün Mistik Enerjisi")
+    st.info("🃏 **Günün Kartı: Güneş** — Neşe, başarı ve netlik dolu bir enerji seni sarıyor.")
+
+    st.markdown("---")
     if st.button("🗑️ Sohbet Geçmişini Temizle", use_container_width=True):
         st.session_state.messages = []
         st.rerun()
 
-
-# --- 🌌 ANA EKRAN ---
+# ------------------------------------------------------------------------------
+# 5. ANA GÖVDE VE SEKMELER
+# ------------------------------------------------------------------------------
 st.title("🌙 Lunara.ai | Mistik Rehber")
-st.caption("Kişiselleştirilmiş Yapay Zeka Fal, Tarot ve Astroloji Danışmanı")
+st.write("Kişiselleştirilmiş Yapay Zeka Fal, Tarot ve Astroloji Danışmanı")
 
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {
-            "role": "assistant",
-            "content": "Hoş geldin. Ben Lunara. Yıldızların fısıltıları, kartların gizemi ve evrenin sırlarıyla sana rehberlik etmek için buradayım."
-        }
-    ]
+api_key = get_groq_api_key()
+if not api_key:
+    st.warning("⚠️ Groq API anahtarı bulunamadı. Lütfen `.streamlit/secrets.toml` dosyanızı kontrol edin.")
 
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🔮 Mistik Sohbet",
-    "📜 Doğum Haritası Analizi",
-    "🃏 3 Kart Tarot Açılımı",
+    "🔮 Mistik Sohbet", 
+    "📜 Doğum Haritası Analizi", 
+    "🃏 3 Kart Tarot Açılımı", 
     "☕ Kahve Falı & Rüyalar"
 ])
 
-SYSTEM_PROMPT = (
-    "Sen Lunara adında bilge, mistik, empatik ve nazik bir tarot/astroloji danışmanısın. "
-    "Kullanıcılara sıcak ve gizemli bir tonla rehberlik ediyorsun."
-)
-
-# --- 🔮 1. SEKME: MİSTİK SOHBET ---
+# ------------------------------------------------------------------------------
+# SEKME 1: MİSTİK SOHBET
+# ------------------------------------------------------------------------------
 with tab1:
     st.markdown("### ✨ Hızlı Mistik Sorular")
     col1, col2, col3, col4 = st.columns(4)
 
+    prompt_to_send = None
     if col1.button("✨ Günlük Fal Yorumu", use_container_width=True):
-        send_prompt_to_ai("Bana bugüne özel genel bir mistik fal yorumu ve rehberlik yapar mısın?", SYSTEM_PROMPT)
-
+        prompt_to_send = "Bugün için genel falımı ve yıldızların bana mesajını yorumlar mısın?"
     if col2.button("❤️ Aşk & Uyum", use_container_width=True):
-        send_prompt_to_ai("Aşk hayatım ve ilişkilerdeki enerjim hakkında mistik bir değerlendirme yapar mısın?", SYSTEM_PROMPT)
-
+        prompt_to_send = "Aşk hayatımla ilgili evrenin bana vermek istediği mesaj nedir?"
     if col3.button("💼 Kariyer & Gelecek", use_container_width=True):
-        send_prompt_to_ai("Kariyerim, maddi durumum ve geleceğimle ilgili yıldızların tavsiyesi nedir?", SYSTEM_PROMPT)
-
+        prompt_to_send = "Kariyerim ve maddi geleceğim konusunda yıldızlar ne söylüyor?"
     if col4.button("🪐 Günün Burç Enerjisi", use_container_width=True):
-        send_prompt_to_ai("Bugünün gökyüzü konumları ve gezegen enerjileri bana nasıl yansıyor?", SYSTEM_PROMPT)
+        prompt_to_send = "Bugünün gezegen konumları ve burç enerjileri hakkında bilgi verir misin?"
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.warning("🤖 Hoş geldin. Ben Lunara. Yıldızların fısıltıları, kartların gizemi ve evrenin sırlarıyla sana rehberlik etmek için buradayım.")
 
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.write(message["content"])
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
 
-    if user_chat_input := st.chat_input("Fal, tarot veya burçlar hakkında bir şey sorun..."):
-        send_prompt_to_ai(user_chat_input, SYSTEM_PROMPT)
+    user_input = st.chat_input("Fal, tarot veya burçlar hakkında bir şey sorun...")
+    final_prompt = user_input or prompt_to_send
 
+    if final_prompt:
+        prompt_messages = [{"role": "system", "content": st.session_state.system_prompt}]
+        prompt_messages.extend(st.session_state.messages)
+        prompt_messages.append({"role": "user", "content": final_prompt})
 
-# --- 📜 2. SEKME: DOĞUM HARİTASI ---
+        st.session_state.messages.append({"role": "user", "content": final_prompt})
+        with st.chat_message("user"):
+            st.write(final_prompt)
+
+        with st.chat_message("assistant"):
+            with st.spinner("Yıldızlar hizalanıyor..."):
+                response = generate_completion(prompt_messages)
+                st.write(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+
+# ------------------------------------------------------------------------------
+# SEKME 2: DOĞUM HARİTASI ANALİZİ
+# ------------------------------------------------------------------------------
 with tab2:
-    st.markdown("### 📜 Doğum Haritası Derin Analizi")
-    st.write("Yıldızların doğduğun anki dizilimini çözümleyelim.")
+    st.subheader("📜 Doğum Haritası Potansiyel Analizi")
+    with st.form("astro_form"):
+        ad = st.text_input("Adınız ve Soyadınız")
+        tarih = st.date_input("Doğum Tarihiniz")
+        saat = st.time_input("Doğum Saatiniz (Tahmini)")
+        sehir = st.text_input("Doğum Yeri (İl/Ülke)")
+        submit = st.form_submit_button("🔮 Haritayı Analiz Et")
 
-    with st.form("astrology_form"):
-        col_name, col_date, col_time = st.columns(3)
-        birth_name = col_name.text_input("Adınız / Doğum İsminiz")
-        birth_date = col_date.date_input("Doğum Tarihiniz")
-        birth_time = col_time.time_input("Doğum Saatiniz (Varsa)")
-        birth_place = st.text_input("Doğum Yeri (Şehir / Ülke)")
-        submit_astro = st.form_submit_button("🌌 Doğum Haritamı Analiz Et")
-
-        if submit_astro:
-            astro_prompt = (
-                f"Adım {birth_name}, Doğum Tarihim: {birth_date}, Doğum Saatim: {birth_time}, "
-                f"Doğum Yerim: {birth_place}. Doğum haritama göre kişilik özelliklerimi, potansiyellerimi "
-                "ve ruhsal yolculuğumu detaylıca analiz eder misin?"
+    if submit and ad and sehir:
+        with st.spinner("Gezegen konumları hesaplanıyor..."):
+            prompt = (
+                f"Kullanıcı Adı: {ad}, Doğum Tarihi: {tarih}, Saati: {saat}, Doğum Yeri: {sehir}. "
+                "Bu bilgilere dayanarak kullanıcının Güneş, Yükselen ve Ay burcu potansiyellerini, "
+                "karakter analizini ve ruhsal yolculuğunu ayrıntılı şekilde mistik bir dille yorumla."
             )
-            send_prompt_to_ai(astro_prompt, SYSTEM_PROMPT)
+            temp_messages = [
+                {"role": "system", "content": "Sen uzman bir astrolog ve doğum haritası analistisin."},
+                {"role": "user", "content": prompt}
+            ]
+            result = generate_completion(temp_messages)
+            st.markdown("---")
+            st.markdown(result)
 
-
-# --- 🃏 3. SEKME: TAROT AÇILIMI ---
+# ------------------------------------------------------------------------------
+# SEKME 3: 3 KART TAROT AÇILIMI
+# ------------------------------------------------------------------------------
 with tab3:
-    st.markdown("### 🃏 3 Kart Tarot Açılımı")
-    st.write("Geçmiş, Şimdi ve Gelecek aksındaki enerjilerini kartlara sor.")
+    st.subheader("🃏 3 Kart Tarot Açılımı (Geçmiş - Şimdi - Gelecek)")
+    niyet = st.text_input("Odaklanmak istediğiniz konu veya niyetiniz:", placeholder="Örn: Kariyerimdeki değişiklikler...")
+    
+    if st.button("🔮 Kartları Çek ve Yorumla"):
+        with st.spinner("Kartlar karıştırılıyor ve çekiliyor..."):
+            prompt = (
+                f"Kullanıcının Niyeti/Sorusu: '{niyet if niyet else 'Genel Hayat Akışı'}'. "
+                "Rastgele 3 Tarot kartı seç (Geçmiş, Şimdi ve Gelecek pozisyonları için). "
+                "Her kartın adını, düz/ters durumunu ve bu 3 kartın birbiriyle olan mistik bağını niyet doğrultusunda detaylıca yorumla."
+            )
+            temp_messages = [
+                {"role": "system", "content": "Sen sezgileri güçlü profesyonel bir Tarot okuyucususun."},
+                {"role": "user", "content": prompt}
+            ]
+            tarot_result = generate_completion(temp_messages)
+            st.markdown("---")
+            st.markdown(tarot_result)
 
-    tarot_focus = st.text_input("Açılım öncesinde niyetin veya odaklanmak istediğin konu nedir?", placeholder="Örn: İlişkimin geleceği, iş değişikliği...")
-    if st.button("🔮 Kartları Çek ve Yorumla", use_container_width=True):
-        tarot_prompt = (
-            f"Tarot açılımı için niyetim: {tarot_focus or 'Genel Hayat Yönüm'}. "
-            "Rastgele 3 Tarot kartı seçerek bunları Geçmiş, Şimdi ve Gelecek konumu olarak mistik bir dille yorumlar mısın?"
-        )
-        send_prompt_to_ai(tarot_prompt, SYSTEM_PROMPT)
-
-
-# --- ☕ 4. SEKME: KAHVE FALI & RÜYALAR ---
+# ------------------------------------------------------------------------------
+# SEKME 4: KAHVE FALI & RÜYALAR
+# ------------------------------------------------------------------------------
 with tab4:
-    st.markdown("### ☕ Kahve Falı & Rüyalar")
-    st.write("Gördüğün sembolleri, fincanındaki imgeleri veya rüyalarını anlat.")
-
-    dream_input = st.text_area("Fincanındaki sembolleri veya gördüğün rüyayı detaylıca yaz:", placeholder="Örn: Rüyamda berrak bir denizin üstünde uçuyordum...")
-
+    st.subheader("☕ Kahve Falı & Rüya Tabiri")
+    metin = st.text_area("Fincanınızdaki sembolleri veya gördüğünüz rüyayı anlatın:", height=150)
+    
+    if st.button("🌙 Mistik Sembol Analizi Yap"):
+        if metin:
+            with st.spinner("Semboller çözümleniyor..."):
+                prompt = (
+                    f"Kullanıcı Metni: '{metin}'. "
+                    "Bu metindeki sembolleri, objeleri ve hisleri hem mistik geleneğe hem de bilincin derinliklerine dayanarak "
+                    "detaylı, anlamlı ve yol gösterici bir biçimde yorumla."
+                )
+                temp_messages = [
+                    {"role": "system", "content": "Sen sembol bilimi ve mistik rüya/fincan yorumlama konusunda uzman bir rehbersin."},
+                    {"role": "user", "content": prompt}
+                ]
+                symbol_result = generate_completion(temp_messages)
+                st.markdown("---")
+                st.markdown(symbol_result)
+        else:
+            st.warning("Lütfen analiz edilecek bir metin yazın.")
