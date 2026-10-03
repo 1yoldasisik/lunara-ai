@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lunara AI - Mistik AI & Astroloji Platformu</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            obsidian: '#0a0814',
+            spaceDark: '#120d26',
+            spaceCard: 'rgba(23, 17, 48, 0.7)',
+            goldGlow: '#f59e0b',
+            cyanGlow: '#06b6d4',
+            violetGlow: '#8b5cf6',
+            mysticGold: '#dfb15b'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Cinzel', 'Georgia', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts & Lucide Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0a0814; }
+    ::-webkit-scrollbar-thumb { background: #2a1f4d; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
+
+    .glass-panel {
+      background: rgba(18, 13, 38, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(223, 177, 91, 0.15);
+    }
+
+    .glass-card {
+      background: rgba(27, 20, 56, 0.5);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      border-color: rgba(223, 177, 91, 0.4);
+      box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .gold-gradient-text {
+      background: linear-gradient(135deg, #fff2cb 0%, #dfb15b 50%, #9a6d20 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* TAROT 3D KART DÖNME EFEKTİ */
+    .tarot-card-container {
+      perspective: 1000px;
+    }
+    .tarot-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transform-style: preserve-3d;
+    }
+    .tarot-card-inner.flipped {
+      transform: rotateY(180deg);
+    }
+    .tarot-card-front, .tarot-card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      border-radius: 1rem;
+    }
+    .tarot-card-back {
+      transform: rotateY(180deg);
+    }
+
+    #star-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .left-purchase-sidebar {
+      position: fixed;
+      top: 140px;
+      left: 18px;
+      width: 180px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    @media (max-width: 1280px) {
+      .left-purchase-sidebar { display: none; }
+    }
+  </style>
+</head>
+<body class="bg-obsidian text-slate-100 font-sans min-h-screen overflow-x-hidden relative selection:bg-violet-600 selection:text-white">
+
+  <!-- Arka Plan Efekti -->
+  <canvas id="star-canvas"></canvas>
+
+  <!-- SOL TARAFTAKİ KREDİ SATIN ALMA SEÇENEKLERİ -->
+  <aside class="left-purchase-sidebar">
+    <div class="text-xs font-serif font-bold text-amber-300 tracking-wider mb-1 flex items-center gap-1">
+      <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400"></i> KREDİ PAKETLERİ
+    </div>
+
+    <div class="glass-card p-3 rounded-2xl border border-amber-500/20 hover:border-amber-400 transition-all">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-amber-200">1. Başlangıç</span>
+        <span class="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded">100 Kredi</span>
+      </div>
+      <div class="text-base font-bold gold-gradient-text my-1">₺150</div>
+      <p class="text-[10px] text-slate-400 leading-tight mb-2">Günlük hızlı fal ve genel burç analizleri için ideal.</p>
+      <button onclick="openPurchaseModal('Başlangıç Paketi', 150, 100)" class="w-full py-1.5 bg-purple-900/60 hover:bg-purple-800 text-amber-200 text-xs font-semibold rounded-xl border border-purple-500/30 transition">
+        Satın Al
+      </button>
+    </div>
+
+    <div class="glass-card p-3 rounded-2xl border border-amber-400/50 bg-purple-950/30 hover:border-amber-300 transition-all relative">
+      <span class="absolute -top-2 right-2 bg-gradient-to-r from-amber-500 to-purple-600 text-[9px] text-white px-1.5 py-0.5 rounded-full font-bold">Popüler</span>
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-amber-200">2. Mistik Pro</span>
+        <span class="text-[10px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded">550 Kredi</span>
+      </div>
+      <div class="text-base font-bold gold-gradient-text my-1">₺600</div>
+      <p class="text-[10px] text-slate-400 leading-tight mb-2">Detaylı doğum haritası & Tarot açılımları için.</p>
+      <button onclick="openPurchaseModal('Mistik Pro', 600, 550)" class="w-full py-1.5 bg-gradient-to-r from-amber-500 to-purple-600 hover:opacity-90 text-white text-xs font-semibold rounded-xl transition shadow-md shadow-amber-500/10">
+        Satın Al
+      </button>
+    </div>
+
+    <div class="glass-card p-3 rounded-2xl border border-amber-500/20 hover:border-amber-400 transition-all">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-amber-200">3. Mistik VIP</span>
+        <span class="text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.5 rounded">2.000 Kredi</span>
+      </div>
+      <div class="text-base font-bold gold-gradient-text my-1">₺1.800</div>
+      <p class="text-[10px] text-slate-400 leading-tight mb-2">Sınırsız AI Rehberlik ve tam astrolojik analizler.</p>
+      <button onclick="openPurchaseModal('Mistik VIP', 1800, 2000)" class="w-full py-1.5 bg-purple-900/60 hover:bg-purple-800 text-amber-200 text-xs font-semibold rounded-xl border border-purple-500/30 transition">
+        Satın Al
+      </button>
+    </div>
+  </aside>
+
+  <!-- Navigation Header -->
+  <header class="sticky top-0 z-40 w-full glass-panel border-b border-amber-500/10 px-4 lg:px-8 py-3.5">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      
+      <!-- Logo -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('horoscope')">
+        <div class="relative flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-tr from-purple-900 via-indigo-950 to-amber-500/20 p-[1px]">
+          <div class="w-full h-full bg-obsidian rounded-full flex items-center justify-center">
+            <i data-lucide="moon" class="w-5 h-5 text-amber-400 fill-amber-400/20"></i>
+          </div>
+        </div>
+        <div>
+          <span class="font-serif text-2xl font-bold tracking-wider gold-gradient-text">LUNARA</span>
+          <span class="text-xs font-semibold uppercase tracking-widest text-cyan-400 ml-1.5 px-1.5 py-0.5 rounded bg-cyan-950/60 border border-cyan-500/30">AI</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav class="hidden md:flex items-center space-x-1 lg:space-x-2 bg-spaceDark/80 p-1.5 rounded-full border border-purple-500/20">
+        <button onclick="switchTab('birthchart')" id="nav-birthchart" class="nav-btn px-4 py-2 rounded-full text-sm font-medium text-slate-300 hover:text-white transition flex items-center gap-2">
+          <i data-lucide="compass" class="w-4 h-4 text-amber-400"></i> Doğum Haritası
+        </button>
+        <button onclick="switchTab('tarot')" id="nav-tarot" class="nav-btn px-4 py-2 rounded-full text-sm font-medium text-slate-300 hover:text-white transition flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i> Tarot Falı
+        </button>
+        <button onclick="switchTab('coffee')" id="nav-coffee" class="nav-btn px-4 py-2 rounded-full text-sm font-medium text-slate-300 hover:text-white transition flex items-center gap-2">
+          <i data-lucide="coffee" class="w-4 h-4 text-amber-600"></i> Kahve Falı
+        </button>
+        <button onclick="switchTab('horoscope')" id="nav-horoscope" class="nav-btn px-4 py-2 rounded-full text-sm font-medium text-white bg-purple-900/50 border border-purple-500/30 flex items-center gap-2">
+          <i data-lucide="sun" class="w-4 h-4 text-cyan-400"></i> Burçlar
+        </button>
+        <button onclick="switchTab('chat')" id="nav-chat" class="nav-btn px-4 py-2 rounded-full text-sm font-medium text-slate-300 hover:text-white transition flex items-center gap-2">
+          <i data-lucide="bot" class="w-4 h-4 text-emerald-400"></i> AI Rehber
+        </button>
+      </nav>
+
+      <!-- Kullanıcı Giriş/Kredi Bilgisi & Admin Butonu -->
+      <div class="flex items-center gap-3">
+        <div id="auth-container"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-12">
+
+    <!-- TAB 1: BURÇLAR -->
+    <section id="tab-horoscope" class="tab-content space-y-8">
+      <div class="text-center max-w-3xl mx-auto space-y-3">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-900/40 border border-cyan-500/30 text-xs font-semibold text-cyan-300">
+          <i data-lucide="sun" class="w-3.5 h-3.5 text-cyan-400"></i> Günlük Transit Analizleri
+        </div>
+        <h1 class="font-serif text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight gold-gradient-text">GÜNLÜK BURÇ YORUMLARI</h1>
+        <p class="text-slate-400 text-sm sm:text-base">Gezegenlerin güncel konumlarına göre burcunuzun aldığı kozmik etkileri ve detaylı tavsiyeleri inceleyin.</p>
+      </div>
+
+      <!-- 12 BURÇ GRID -->
+      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 sm:gap-4 max-w-5xl mx-auto" id="zodiac-grid">
+        <!-- JS Dinamik Yükler -->
+      </div>
+
+      <!-- Detaylı Burç Yorum Kartı -->
+      <div id="horoscope-detail-card" class="glass-panel p-6 sm:p-8 rounded-3xl space-y-6 max-w-4xl mx-auto border-purple-500/30">
+        <div class="flex items-center gap-4 border-b border-white/10 pb-4">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500/20 to-purple-600/30 border border-amber-400/40 flex items-center justify-center text-3xl" id="selected-zodiac-icon">
+            ♈
+          </div>
+          <div>
+            <h2 class="font-serif text-2xl font-bold text-amber-200" id="selected-zodiac-name">KOÇ BURCU</h2>
+            <span class="text-xs text-slate-400" id="selected-zodiac-date">21 Mart - 19 Nisan</span>
+          </div>
+        </div>
+
+        <div class="space-y-4 pt-2 text-sm leading-relaxed text-slate-200" id="zodiac-long-content">
+          <!-- Türkçe Burç Analizi -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: DOĞUM HARİTASI -->
+    <section id="tab-birthchart" class="tab-content hidden space-y-6">
+      <div class="text-center max-w-2xl mx-auto">
+        <h2 class="font-serif text-3xl font-bold gold-gradient-text">Doğum Haritası Analizi</h2>
+        <p class="text-slate-400 text-sm mt-1">Doğum anınızdaki gezegen konumlarına göre kişiselleştirilmiş analizinizi çıkarın.</p>
+      </div>
+      <form onsubmit="generateBirthChart(event)" class="glass-panel p-6 rounded-3xl max-w-lg mx-auto space-y-4 border-amber-500/20">
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Adınız Soyadınız</label>
+          <input type="text" id="bc-name" required placeholder="Ad Soyad" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Doğum Tarihi</label>
+            <input type="date" id="bc-date" required class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Doğum Saati</label>
+            <input type="time" id="bc-time" required class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Doğum Yeri (Şehir)</label>
+          <input type="text" id="bc-city" required placeholder="İstanbul" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <button type="submit" class="w-full py-3 bg-gradient-to-r from-amber-500 to-purple-600 text-white font-semibold text-sm rounded-xl hover:opacity-90 transition shadow-lg shadow-amber-500/20">
+          Haritamı Hesapla (50 Kredi)
+        </button>
+      </form>
+      <div id="chart-result" class="hidden glass-panel p-6 sm:p-8 rounded-3xl max-w-3xl mx-auto space-y-4 border-amber-500/30">
+        <h3 class="font-serif text-xl font-bold text-amber-200 border-b border-white/10 pb-3 flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i> Kapsamlı Mistik Doğum Haritası Raporu
+        </h3>
+        <div class="text-sm text-slate-300 leading-relaxed space-y-4" id="chart-result-text"></div>
+      </div>
+    </section>
+
+    <!-- TAB 3: TAROT FALI (3D DÖNEN KARTLAR) -->
+    <section id="tab-tarot" class="tab-content hidden space-y-6 text-center">
+      <div class="max-w-2xl mx-auto">
+        <h2 class="font-serif text-3xl font-bold gold-gradient-text">Mistik Tarot Açılımı</h2>
+        <p class="text-slate-400 text-sm mt-1">Zihninizdeki soruya odaklanın ve kartlarınızı seçin.</p>
+      </div>
+
+      <!-- KARTLAR CONTAINER -->
+      <div class="flex justify-center gap-4 sm:gap-6 py-6" id="tarot-cards-container">
+        
+        <!-- KART 1 -->
+        <div class="tarot-card-container w-28 sm:w-32 h-44 sm:h-52 cursor-pointer" onclick="drawTarotCard(1, 'Aşk & İlişki Açılımı')">
+          <div class="tarot-card-inner" id="tarot-card-inner-1">
+            <div class="tarot-card-front glass-card border border-purple-500/40 flex flex-col items-center justify-center hover:scale-105 transition">
+              <i data-lucide="sparkles" class="w-8 h-8 text-amber-400 mb-2"></i>
+              <span class="text-xs text-slate-300 font-medium">1. Kart</span>
+            </div>
+            <div class="tarot-card-back glass-panel border border-amber-400/80 bg-gradient-to-b from-purple-950 via-spaceDark to-amber-950/40 flex flex-col items-center justify-center p-2 text-center shadow-lg shadow-amber-500/20">
+              <span class="text-3xl mb-1" id="tarot-icon-1">🎡</span>
+              <span class="text-xs font-bold text-amber-200 leading-tight" id="tarot-title-1">Kader Çarkı</span>
+              <span class="text-[9px] text-amber-400/80 mt-1 uppercase tracking-wider">Mistik Kart</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KART 2 -->
+        <div class="tarot-card-container w-28 sm:w-32 h-44 sm:h-52 cursor-pointer" onclick="drawTarotCard(2, 'Geçmiş & Gelecek Açılımı')">
+          <div class="tarot-card-inner" id="tarot-card-inner-2">
+            <div class="tarot-card-front glass-card border border-purple-500/40 flex flex-col items-center justify-center hover:scale-105 transition">
+              <i data-lucide="sparkles" class="w-8 h-8 text-amber-400 mb-2"></i>
+              <span class="text-xs text-slate-300 font-medium">2. Kart</span>
+            </div>
+            <div class="tarot-card-back glass-panel border border-amber-400/80 bg-gradient-to-b from-purple-950 via-spaceDark to-amber-950/40 flex flex-col items-center justify-center p-2 text-center shadow-lg shadow-amber-500/20">
+              <span class="text-3xl mb-1" id="tarot-icon-2">☀️</span>
+              <span class="text-xs font-bold text-amber-200 leading-tight" id="tarot-title-2">Güneş Kartı</span>
+              <span class="text-[9px] text-amber-400/80 mt-1 uppercase tracking-wider">Mistik Kart</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KART 3 -->
+        <div class="tarot-card-container w-28 sm:w-32 h-44 sm:h-52 cursor-pointer" onclick="drawTarotCard(3, 'Kariyer ve Para Açılımı')">
+          <div class="tarot-card-inner" id="tarot-card-inner-3">
+            <div class="tarot-card-front glass-card border border-purple-500/40 flex flex-col items-center justify-center hover:scale-105 transition">
+              <i data-lucide="sparkles" class="w-8 h-8 text-amber-400 mb-2"></i>
+              <span class="text-xs text-slate-300 font-medium">3. Kart</span>
+            </div>
+            <div class="tarot-card-back glass-panel border border-amber-400/80 bg-gradient-to-b from-purple-950 via-spaceDark to-amber-950/40 flex flex-col items-center justify-center p-2 text-center shadow-lg shadow-amber-500/20">
+              <span class="text-3xl mb-1" id="tarot-icon-3">👑</span>
+              <span class="text-xs font-bold text-amber-200 leading-tight" id="tarot-title-3">İmparatoriçe</span>
+              <span class="text-[9px] text-amber-400/80 mt-1 uppercase tracking-wider">Mistik Kart</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="tarot-result" class="hidden glass-panel p-6 rounded-3xl max-w-2xl mx-auto text-left space-y-3">
+        <h3 class="font-serif text-lg font-bold text-amber-300 border-b border-white/10 pb-2" id="tarot-card-name"></h3>
+        <div class="text-sm text-slate-300 leading-relaxed space-y-4" id="tarot-card-desc"></div>
+      </div>
+    </section>
+
+    <!-- TAB 4: KAHVE FALI -->
+    <section id="tab-coffee" class="tab-content hidden space-y-6 text-center">
+      <div class="max-w-2xl mx-auto">
+        <h2 class="font-serif text-3xl font-bold gold-gradient-text">Geleneksel Kahve Falı</h2>
+        <p class="text-slate-400 text-sm mt-1">Fincanınızın fotoğraflarını yükleyin, telvelerinizi detaylıca yorumlayalım.</p>
+      </div>
+
+      <div class="glass-panel p-8 rounded-3xl max-w-lg mx-auto border-amber-500/20 space-y-4">
+        <!-- GİZLİ FILE INPUT -->
+        <input type="file" id="coffee-image-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+        
+        <!-- SÜRÜKLE BIRAK / GÖRSEL YÜKLEME ALANI -->
+        <div id="upload-box" onclick="document.getElementById('coffee-image-input').click()" class="border-2 border-dashed border-purple-500/40 rounded-2xl p-6 hover:border-amber-400 transition cursor-pointer flex flex-col items-center justify-center min-h-[160px] relative overflow-hidden">
+          <div id="upload-placeholder" class="flex flex-col items-center">
+            <i data-lucide="camera" class="w-10 h-10 text-amber-400 mb-2"></i>
+            <p class="text-xs text-slate-300 font-medium">Fincan Fotoğrafı Seç veya Buraya Sürükle</p>
+            <span class="text-[10px] text-slate-500 mt-1">PNG, JPG, WEBP (Max 5MB)</span>
+          </div>
+          <!-- YÜKLENEN GÖRSEL ÖNİZLEME -->
+          <div id="upload-preview" class="hidden w-full h-full flex flex-col items-center">
+            <img id="preview-img" src="" alt="Fincan Fotoğrafı" class="max-h-40 rounded-xl border border-amber-400/50 object-cover shadow-md mb-2">
+            <span class="text-[11px] text-amber-300 font-semibold flex items-center gap-1">
+              <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-400"></i> Görsel Yüklendi (Değiştirmek için tıklayın)
+            </span>
+          </div>
+        </div>
+
+        <button onclick="triggerCoffeeAnalysis()" class="w-full py-3 bg-gradient-to-r from-amber-500 to-purple-600 text-white font-semibold text-sm rounded-xl hover:opacity-90 transition shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
+          <i data-lucide="sparkles" class="w-4 h-4"></i> Falıma Bak (30 Kredi)
+        </button>
+      </div>
+
+      <!-- FAL YORUM SONUÇ PANANELİ -->
+      <div id="coffee-result" class="hidden glass-panel p-6 rounded-3xl max-w-2xl mx-auto text-left space-y-3 border-amber-500/30">
+        <h3 class="font-serif text-lg font-bold text-amber-300 border-b border-white/10 pb-2 flex items-center gap-2">
+          <i data-lucide="coffee" class="w-5 h-5 text-amber-400"></i> Fincan ve Telve Yorumunuz
+        </h3>
+        <div class="text-sm text-slate-300 leading-relaxed space-y-4" id="coffee-result-text"></div>
+      </div>
+    </section>
+
+    <!-- TAB 5: AI REHBER (CHAT) -->
+    <section id="tab-chat" class="tab-content hidden max-w-3xl mx-auto space-y-4">
+      <div class="glass-panel p-4 sm:p-6 rounded-3xl h-[480px] flex flex-col justify-between border-purple-500/30">
+        <div id="chat-box" class="space-y-4 overflow-y-auto pr-2 h-full">
+          <div class="bg-purple-900/40 p-4 rounded-2xl max-w-xl border border-purple-500/20 text-xs sm:text-sm text-slate-200 leading-relaxed space-y-2">
+            <strong class="text-amber-300">Lunara AI:</strong>
+            <p>Merhaba, ruhsal yolculuğunuzda size rehberlik etmek için buradayım. Yıldızların hizalanması, burç transitleri, tarot sembolleri veya zihninizi meşgul eden gelecek kaygıları hakkında dilediğinizi sorabilirsiniz.</p>
+          </div>
+        </div>
+        <form onsubmit="sendChatMessage(event)" class="flex gap-2 pt-3 border-t border-white/10">
+          <input type="text" id="chat-input" placeholder="Mistik rehberinize detaylı bir soru sorun..." required class="flex-1 bg-spaceDark border border-purple-500/30 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400">
+          <button type="submit" class="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-purple-600 text-white font-semibold text-xs rounded-xl hover:opacity-90 transition shadow-md shadow-amber-500/20">
+            Gönder
+          </button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- KULLANICI ÜYELİK / GİRİŞ MODAL -->
+  <div id="auth-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+    <div class="glass-panel p-6 rounded-3xl max-w-md w-full mx-4 border-amber-500/30 text-slate-100 relative">
+      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex border-b border-white/10 mb-5">
+        <button id="tab-login-btn" onclick="switchAuthMode('login')" class="flex-1 pb-3 text-sm font-bold border-b-2 border-amber-400 text-amber-300">Giriş Yap</button>
+        <button id="tab-register-btn" onclick="switchAuthMode('register')" class="flex-1 pb-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200">Üye Ol</button>
+      </div>
+
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">E-Posta Adresi</label>
+          <input type="email" id="login-email" required placeholder="admin@lunara.ai veya e-posta" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Şifre</label>
+          <input type="password" id="login-pass" required placeholder="••••••••" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-purple-600 text-white font-semibold text-sm rounded-xl hover:opacity-95 transition">
+          Giriş Yap
+        </button>
+      </form>
+
+      <form id="register-form" onsubmit="handleRegister(event)" class="space-y-3 hidden">
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Adınız Soyadınız</label>
+          <input type="text" id="reg-name" required placeholder="Ad Soyad" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">E-Posta Adresi</label>
+          <input type="email" id="reg-email" required placeholder="email@example.com" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Şifre</label>
+          <input type="password" id="reg-pass" required placeholder="••••••••" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-purple-600 text-white font-semibold text-sm rounded-xl hover:opacity-95 transition">
+          Hesap Oluştur (+100 Hediye Kredi)
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- KULLANICI PROFİL MODAL -->
+  <div id="user-panel-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+    <div class="glass-panel p-6 sm:p-8 rounded-3xl max-w-2xl w-full mx-4 border-amber-500/30 text-slate-100 relative max-h-[90vh] overflow-y-auto">
+      
+      <button onclick="closeUserPanelModal()" class="absolute top-5 right-5 z-20 p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition cursor-pointer" title="Kapat">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-6 border-b border-white/10 pb-4 pr-10">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl" id="panel-avatar">
+          U
+        </div>
+        <div>
+          <h3 class="font-serif text-xl font-bold text-amber-200" id="panel-user-name">Kullanıcı Paneli</h3>
+          <p class="text-xs text-slate-400" id="panel-user-email">kullanici@lunara.ai</p>
+        </div>
+      </div>
+
+      <div class="glass-card p-5 rounded-2xl border border-amber-500/30 bg-purple-950/40 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <div class="text-xs text-amber-300 font-semibold mb-1 flex items-center gap-1.5">
+            <i data-lucide="coins" class="w-4 h-4 text-amber-400"></i> MEVCUT KREDİ BAKIYENİZ
+          </div>
+          <div class="text-3xl font-bold gold-gradient-text" id="panel-credit-amount">0 Kredi</div>
+          <p class="text-[11px] text-slate-400 mt-1">Kredilerinizi doğum haritası, tarot ve kahve falı analizlerinde kullanabilirsiniz.</p>
+        </div>
+        <button onclick="closeUserPanelModal(); openPurchaseModal('Mistik Pro', 600, 550)" class="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-amber-500 to-purple-600 hover:opacity-90 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 whitespace-nowrap">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i> Kredi Satın Al
+        </button>
+      </div>
+
+      <div class="space-y-6">
+        <div class="border-b border-white/10 pb-2">
+          <h4 class="text-sm font-bold text-amber-300 flex items-center gap-2">
+            <i data-lucide="user-cog" class="w-4 h-4"></i> Kişisel Astroloji Bilgileriniz
+          </h4>
+        </div>
+
+        <form onsubmit="saveUserProfile(event)" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Adınız Soyadınız</label>
+              <input type="text" id="profile-name" required class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">E-Posta Adresi</label>
+              <input type="email" id="profile-email" disabled class="w-full bg-spaceDark/50 border border-purple-500/10 rounded-xl px-3 py-2 text-sm text-slate-400 cursor-not-allowed">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Doğum Tarihi</label>
+              <input type="date" id="profile-birthdate" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Doğum Şehri / Yeri</label>
+              <input type="text" id="profile-birthcity" placeholder="İstanbul, Türkiye" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+            </div>
+          </div>
+          <button type="submit" class="px-5 py-2 bg-purple-900/60 hover:bg-purple-800 text-amber-200 text-xs font-semibold rounded-xl border border-purple-500/30 transition">
+            Bilgileri Kaydet
+          </button>
+        </form>
+
+        <div class="border-b border-white/10 pb-2 pt-2">
+          <h4 class="text-sm font-bold text-amber-300 flex items-center gap-2">
+            <i data-lucide="key-round" class="w-4 h-4"></i> Şifre Değiştir
+          </h4>
+        </div>
+
+        <form onsubmit="changePassword(event)" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Mevcut Şifre</label>
+              <input type="password" id="pass-current" required placeholder="••••••••" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+            </div>
+            <div>
+              <label class="block text-xs text-slate-300 mb-1">Yeni Şifre</label>
+              <input type="password" id="pass-new" required placeholder="••••••••" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+            </div>
+          </div>
+          <button type="submit" class="px-5 py-2 bg-purple-900/60 hover:bg-purple-800 text-amber-200 text-xs font-semibold rounded-xl border border-purple-500/30 transition">
+            Şifreyi Güncelle
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN YÖNETİM PANANLİ MODAL (ÜYE SİLME, KREDİ EKLEME & YORUMLARI OKUMA VE SİLME) -->
+  <div id="admin-panel-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md">
+    <div class="glass-panel p-6 sm:p-8 rounded-3xl max-w-5xl w-full mx-4 border-amber-500/40 text-slate-100 relative max-h-[90vh] overflow-y-auto">
+      
+      <button onclick="closeAdminPanelModal()" class="absolute top-5 right-5 z-20 p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition cursor-pointer" title="Kapat">
+        <i data-lucide="x" class="w-6 h-6"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+        <div class="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 font-bold text-xl">
+          <i data-lucide="shield-check" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h3 class="font-serif text-xl font-bold gold-gradient-text">YÖNETİCİ (ADMIN) PANANELİ</h3>
+          <p class="text-xs text-slate-400">Üyeleri yönetin, silin, kredi ekleyin ve kullanıcıların tüm fal/analiz yorumlarını okuyup silin.</p>
+        </div>
+      </div>
+
+      <!-- TAB SEÇİMİ -->
+      <div class="flex border-b border-white/10 mb-6 gap-4">
+        <button id="admin-tab-users-btn" onclick="switchAdminTab('users')" class="pb-3 text-sm font-bold border-b-2 border-amber-400 text-amber-300 flex items-center gap-2">
+          <i data-lucide="users" class="w-4 h-4"></i> Üye Yönetimi & Kredi Ekleme
+        </button>
+        <button id="admin-tab-readings-btn" onclick="switchAdminTab('readings')" class="pb-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-4 h-4"></i> Üye Fal & Analiz Yorumları
+        </button>
+      </div>
+
+      <!-- TAB 1: ÜYE LİSTESİ, SİLME VE KREDİ EKLEME -->
+      <div id="admin-tab-users" class="space-y-4">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 text-xs text-amber-300/80 uppercase tracking-wider">
+                <th class="py-3 px-3">Üye</th>
+                <th class="py-3 px-3">E-Posta</th>
+                <th class="py-3 px-3">Doğum Tarihi / Şehir</th>
+                <th class="py-3 px-3">Kredi</th>
+                <th class="py-3 px-3 text-right">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody id="admin-users-list" class="divide-y divide-white/5 text-xs text-slate-200">
+              <!-- JS Dinamik Dolduracak -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 2: ÜYE FAL & ANALİZ YORUMLARINI OKUMA VE SİLME -->
+      <div id="admin-tab-readings" class="space-y-4 hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-white/10 text-xs text-amber-300/80 uppercase tracking-wider">
+                <th class="py-3 px-3">Tarih</th>
+                <th class="py-3 px-3">Kullanıcı</th>
+                <th class="py-3 px-3">Aktivite</th>
+                <th class="py-3 px-3">Açıklama</th>
+                <th class="py-3 px-3 text-right">İşlem / Yorum</th>
+              </tr>
+            </thead>
+            <tbody id="admin-readings-list" class="divide-y divide-white/5 text-xs text-slate-200">
+              <!-- JS Dinamik Dolduracak -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ÜYE DÜZENLEME & KREDİ EKLEME MODAL (ADMIN İÇİN) -->
+  <div id="admin-edit-user-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+    <div class="glass-panel p-6 rounded-3xl max-w-md w-full mx-4 border-amber-500/40 text-slate-100 relative">
+      <button onclick="closeAdminEditUserModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <h3 class="font-serif text-lg font-bold text-amber-300 mb-4">Üye Düzenle & Kredi Ekle</h3>
+
+      <form onsubmit="saveAdminEditedUser(event)" class="space-y-3">
+        <input type="hidden" id="admin-edit-index">
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Ad Soyad</label>
+          <input type="text" id="admin-edit-name" required class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">E-Posta</label>
+          <input type="email" id="admin-edit-email" required class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Doğum Tarihi</label>
+            <input type="date" id="admin-edit-birthdate" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+          </div>
+          <div>
+            <label class="block text-xs text-amber-300 font-bold mb-1">Kredi Bakiye (Ekle/Düzelt)</label>
+            <input type="number" id="admin-edit-credits" required class="w-full bg-spaceDark border border-amber-500/50 rounded-xl px-3 py-2 text-sm text-amber-200 font-bold focus:outline-none focus:border-amber-400">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Doğum Şehri</label>
+          <input type="text" id="admin-edit-birthcity" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <button type="submit" class="w-full py-2.5 mt-2 bg-gradient-to-r from-amber-500 to-purple-600 text-white font-semibold text-sm rounded-xl hover:opacity-95 transition">
+          Değişiklikleri Kaydet
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ANALİZ VE YORUM DETAY MODAL (ADMIN İÇİN) -->
+  <div id="admin-view-reading-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md">
+    <div class="glass-panel p-6 sm:p-8 rounded-3xl max-w-2xl w-full mx-4 border-amber-500/40 text-slate-100 relative max-h-[85vh] overflow-y-auto">
+      <button onclick="closeAdminReadingModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="border-b border-white/10 pb-3 mb-4">
+        <span id="reading-modal-type" class="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-semibold">Fal Türü</span>
+        <h3 id="reading-modal-user" class="font-serif text-xl font-bold text-white mt-1">Kullanıcı Adı</h3>
+        <span id="reading-modal-date" class="text-xs text-slate-400">Tarih</span>
+      </div>
+
+      <div id="reading-modal-content" class="text-sm text-slate-200 leading-relaxed space-y-4">
+        <!-- Detaylı Analiz Metni Buraya Yüklenecek -->
+      </div>
+    </div>
+  </div>
+
+  <!-- KREDİ ÖDEME MODAL -->
+  <div id="purchase-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+    <div class="glass-panel p-6 rounded-3xl max-w-md w-full mx-4 border-amber-500/30 text-slate-100 relative">
+      <button onclick="closePurchaseModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+      
+      <h3 class="font-serif text-xl font-bold gold-gradient-text mb-1" id="modal-package-name">Kredi Satın Al</h3>
+      <p class="text-xs text-slate-400 mb-4" id="modal-package-price">Tutar: ₺0</p>
+
+      <form onsubmit="confirmPayment(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Kart Üzerindeki İsim</label>
+          <input type="text" required placeholder="Ad Soyad" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Kart Numarası</label>
+          <input type="text" maxlength="19" required placeholder="0000 0000 0000 0000" class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+        </div>
+        <div class="flex gap-3">
+          <div class="flex-1">
+            <label class="block text-xs text-slate-300 mb-1">SKT (AA/YY)</label>
+            <input type="text" placeholder="12/28" maxlength="5" required class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+          </div>
+          <div class="flex-1">
+            <label class="block text-xs text-slate-300 mb-1">CVC</label>
+            <input type="password" placeholder="123" maxlength="3" required class="w-full bg-spaceDark border border-purple-500/30 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
+          </div>
+        </div>
+        <button type="submit" class="w-full py-2.5 mt-2 bg-gradient-to-r from-amber-500 to-purple-600 text-white font-semibold text-sm rounded-xl hover:opacity-95 transition">
+          Ödemeyi Tamamla
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // --- KULLANICI, SİSTEM & FAL GEÇMİŞİ VERİ TABANI ---
+    let currentUser = JSON.parse(localStorage.getItem('lunara_user')) || null;
+    let allUsers = JSON.parse(localStorage.getItem('lunara_all_users')) || [
+      { name: "Ayşe Yılmaz", email: "ayse@mail.com", credits: 350, birthDate: "1994-05-12", birthCity: "İstanbul" },
+      { name: "Mehmet Demir", email: "mehmet@mail.com", credits: 120, birthDate: "1988-11-23", birthCity: "Ankara" },
+      { name: "Lunara Admin", email: "admin@lunara.ai", credits: 9999, birthDate: "1990-01-01", birthCity: "İstanbul", isAdmin: true }
+    ];
+    let readingHistory = JSON.parse(localStorage.getItem('lunara_readings')) || [
+      { 
+        date: "2026-09-26 14:20", 
+        userName: "Ayşe Yılmaz", 
+        type: "Tarot Falı", 
+        detail: "Aşk & İlişki Açılımı - Kader Çarkı",
+        fullText: "<p>Seçtiğiniz <strong>Kader Çarkı</strong> kartı, hayatınızın bu döneminde evrensel çarkların sizin lehinize dönmeye başladığını ve kaçınılmaz, olumlu değişim dalgalarının kapıda olduğunu simgeler. Durağanlaşan veya tıkandığını düşündüğünüz süreçlerde ivme kazanacağınız bir döngüdesiniz.</p><p>Geçmişte ektiğiniz tohumların ve verdiğiniz emeklerin karşılığını alma zamanı geldi. Aşk ve ilişkilerde kilitlenmiş durumlar aniden çözüme kavuşabilir.</p><p>Kariyer ve para alanında beklediğiniz fırsatlar ivme kazanacak. Değişime direnç göstermek yerine akışa teslim olmalısınız.</p><p>✨ Mistik Rehberlik: Şans şu an sizin yanınızda, ancak onu yakalamak için harekete geçmelisiniz.</p>" 
+      },
+      { 
+        date: "2026-09-26 15:45", 
+        userName: "Mehmet Demir", 
+        type: "Kahve Falı", 
+        detail: "Fincan Fotoğrafı Analizi",
+        fullText: "<p>Fincanın dip kısmındaki birikinti, uzun süredir göğsünüzde taşıdığınız zihinsel yükün artık son demlerine geldiğini söylüyor.</p><p>Telvelerin kenarlardan yukarıya doğru çizdiği kıvrımlarda net bir <strong>uzun yol</strong> belirmiş; bu yolun ucundaki aydınlık kapı yeni bir başlangıcı müjdeliyor.</p><p>Kulp tarafındaki kuş ve anahtar simgeleri hanenize dökülecek müjdeli haberlere ve kilitli kalmış maddi bir dü düğümün çözüleceğine işaret etmektedir.</p><p>✨ Telve İşareti: Yolunuz açık, yakın vakitte alacağınız sevindirici haber hayatınıza ferahlık katacak.</p>" 
+      }
+    ];
+
+    let selectedPackageCredits = 0;
+    let currentZodiacKey = 'Aries';
+    let uploadedImageBase64 = null;
+
+    // RASTGELE TAROT KART VERİLERİ (EN AZ 4 PARAGRAF)
+    const tarotDeck = [
+      { 
+        name: "Kader Çarkı (Wheel of Fortune)", 
+        icon: "🎡", 
+        desc: `
+          <p class='leading-relaxed'>Seçtiğiniz <strong>Kader Çarkı</strong> kartı, hayatınızın bu döneminde evrensel çarkların sizin lehinize dönmeye başladığını ve kaçınılmaz, olumlu değişim dalgalarının kapıda olduğunu simgeler. Durağanlaşan veya tıkandığını düşündüğünüz süreçlerde ivme kazanacağınız, sürpriz gelişmelere gebe bir kozmik döngüye girmektesiniz.</p>
+          <p class='leading-relaxed'>Kartın derin mesajı, geçmişte ektiğiniz tohumların, sabrınızın ve verdiğiniz emeklerin karşılığını alma zamanının geldiğidir. Aşk ve ilişkilerde kilitlenmiş, belirsizliğini koruyan durumlar aniden çözüme kavuşabilir; kalbinizi aşka yeniden açacaksınız.</p>
+          <p class='leading-relaxed'>Kariyer ve para alanında ise beklediğiniz fırsatlar ivme kazanacaktır. Yeni kapıların açılmasıyla birlikte finansal rahatlama yaşayabilir, terfi veya iş değişikliği adımları atabilirsiniz. Değişime direnç göstermek yerine akışa teslim olmalısınız.</p>
+          <p class='text-xs text-amber-300/80 italic pt-1'>✨ Mistik Rehberlik: Şans şu an sizin yanınızda, ancak onu yakalamak için cesaretle harekete geçmelisiniz.</p>
+        ` 
+      },
+      { 
+        name: "Güneş Kartı (The Sun)", 
+        icon: "☀️", 
+        desc: `
+          <p class='leading-relaxed'>Mistik destenin en neşeli ve aydınlık kartı olan <strong>Güneş Kartı</strong>, karanlık günlerin, kuşkuların ve belirsizliklerin tamamen geride kaldığını müjdeler. İçinizdeki yaşama sevincini, netliği ve yüksek pozitif enerjiyi simgeleyen bu kart, ruhsal uyanışınızın simgesidir.</p>
+          <p class='leading-relaxed'>İlişkilerinizde samimiyet, şeffaflık ve tutku ön plana çıkarken, aradaki soğukluklar tamamen ortadan kaybolacaktır. Kalbinizdeki sevgi frekansı çevrenizdeki herkesi şifalandıracak güce ulaşacaktır.</p>
+          <p class='leading-relaxed'>Kariyerinizde çabalarınızın herkes tarafından takdir toplayacağı büyük bir başarı sürecine adım atıyorsunuz. Kendinize olan güveniniz tavan yapacak, projeleriniz meyvelerini vermeye başlayacaktır.</p>
+          <p class='text-xs text-amber-300/80 italic pt-1'>✨ Mistik Rehberlik: Neşeyle parlayın; içsel ışığınız karşınıza çıkan tüm engelleri eritecek güçte.</p>
+        ` 
+      },
+      { 
+        name: "İmparatoriçe (The Empress)", 
+        icon: "👑", 
+        desc: `
+          <p class='leading-relaxed'>Bereketin, üretkenliğin ve koşulsuz sevginin sembolü olan <strong>İmparatoriçe</strong> kartı, hayatınızın her alanında zenginleşeceğiniz verimli bir dönemi simgeler. Yeni projelerin doğuşu, sanatsal ilhamlar ve maddi konularda yaşanacak bolluk bu kartın getirdiği kozmik hediyelerdendir.</p>
+          <p class='leading-relaxed'>Duygusal yaşamınızda derin bir doyum, şefkat ve huzur hakim olacak. Sezgilerinizin gücü ve anaç/koruyucu yaklaşımınız sayesinde hem kendinizi hem de sevdiklerinizi şifalandıracaksınız.</p>
+          <p class='leading-relaxed'>Maddi kaynakların çoğalması, yatırımların değer kazanması ve ev/aile ortamında yakalanacak estetik huzur sizi ruhen doyuma ulaştıracaktır. Doğanın ve evrenin sunduğu nimetleri kabul etmeye hazır olun.</p>
+          <p class='text-xs text-amber-300/80 italic pt-1'>✨ Mistik Rehberlik: Potansiyelinizi ortaya koyun; doğa ve evren sizi zenginliklerle beslemeye hazır.</p>
+        ` 
+      }
+    ];
+
+    // --- TÜRKÇE BURÇ VERİTABANI (12 BURCUN HEPSİ İÇİN EN AZ 4 PARAGRAF) ---
+    const zodiacData = {
+      Aries: {
+        icon: "♈",
+        date: "21 Mart - 19 Nisan",
+        name: "KOÇ BURCU",
+        content: `
+          <p class="leading-relaxed"><strong class="text-amber-300">Günün Genel Kozmik Durumu:</strong> Yönetici gezegeniniz olan ateşli Mars'ın gökyüzündeki elverişli konumlanışı, içsel dinamizminizi ve liderlik ruhunuzu zirveye taşıyor. Güne son derece yüksek bir motivasyon, cesaret ve kararlılıkla adım atıyorsunuz. Zihninizde uzun süredir askıda kalan, ertelediğiniz projeleri hızla tamamlamak ve yeni radikal kararlar almak adına enerjinizin en yüksek olduğu mükemmel bir kozmik gün geçirmektesiniz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Aşk & İlişkiler:</strong> İletişim kanalınızda Merkür'ün zihinsel akıcılığı arttıran etkileri yoğun bir şekilde hissettiriyor. Partnerinizle geçmişte yaşanan ufak pürüzleri samimiyetle konuşup çözüme kavuşturabilir, aranızdaki tutkulu bağı yeniden güçlendirebilirsiniz. Yalnız Koçlar için sürpriz tanışmalar gündemde.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Kariyer & Finans:</strong> Doğal özgüveniniz ve inisiyatif alma yeteneğiniz üstlerinizin ve iş ortaklarınızın takdirini toplayacak. İş hayatınızda risk gerektiren ancak potansiyeli yüksek yeni yatırım fırsatlarını değerlendirmek için stratejik adımlar atabilirsiniz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Sağlık & Enerji:</strong> Bedensel ve zihinsel enerjiniz oldukça yüksek ancak aşırı tempodan kaynaklı baş ve boyun bölgesinde hassasiyet yaşanabilir. Dengeli dinlenme süreleri oluşturmayı unutmayın.</p>
+          <p class="text-xs text-amber-300/80 italic pt-2">✨ Günün Kozmik Tavsiyesi: Doğal cesaretinizi mantıklı ve planlı hareketlerle birleştirerek mucizeler yaratın.</p>
+        `
+      },
+      Taurus: { 
+        icon: "♉", 
+        date: "20 Nisan - 20 Mayıs", 
+        name: "BOĞA BURCU",
+        content: `
+          <p class="leading-relaxed"><strong class="text-amber-300">Günün Genel Kozmik Durumu:</strong> Venüs'ün huzur ve konfor getiren açıları, gün boyunca kararlarınızı şekillendiriyor. Finansal konular ve kişisel değerleriniz üzerinde derinlemesine düşünmek, köklü kararlar almak isteyeceğiniz dengeli ve sağlam bir gündesiniz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Aşk & İlişkiler:</strong> İlişkinizde sadakat, güvenlik ve huzur ihtiyacı ön planda. Partnerinizle baş başa geçireceğiniz kaliteli zamanlar aranızdaki güveni pekiştirecektir. Yalnız Boğalar için dingin ama derin bir çekim kapıda.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Kariyer & Finans:</strong> Maddi konularda oldukça sağlam adımlar atacaksınız. Bütçe planlaması yapmak veya uzun vadeli gayrimenkul/yatırım konularını değerlendirmek adına kozmik şartlar son derece elverişli.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Sağlık & Enerji:</strong> Boğaz ve boyun bölgeniz hassaslaşabilir. Soğuk içeceklerden kaçınmalı, bedeninize ihtiyacı olan dinlenmeyi cömertçe sunmalısınız.</p>
+          <p class="text-xs text-amber-300/80 italic pt-2">✨ Tavsiye: Değişime direnç göstermeyin, esneklik başarınızı artıracaktır.</p>
+        `
+      },
+      Gemini: { 
+        icon: "♊", 
+        date: "21 Mayıs - 20 Haziran", 
+        name: "İKİZLER BURCU", 
+        content: `
+          <p class="leading-relaxed"><strong class="text-amber-300">Günün Genel Kozmik Durumu:</strong> Yönetici gezegeniniz Merkür'ün hızlı ve zihinsel akışı yükselten enerjisiyle güne oldukça meraklı, neşeli ve hareketli başlıyorsunuz. Zihniniz adeta bir fikir fabrikası gibi çalışıyor.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Aşk & İlişkiler:</strong> İletişim yeteneğiniz ve esprili dilinizle çevrenizdekileri kolayca büyülüyorsunuz. Partnerinizle entelektüel derinliği olan sohbetler etmek aranızdaki romantik kıvılcımı yeniden yakacak.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Kariyer & Finans:</strong> Toplantılar, sunumlar ve ticaret odaklı görüşmeler için ideal bir gün. Çoklu görevleri başarıyla yönetebilir, yeni iş birliklerine imza atabilirsiniz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Sağlık & Enerji:</strong> Zihinsel yoğunluk sinir sisteminizi yorabilir. Meditasyon veya kısa yürüyüşlerle zihninizi boşaltmaya özen gösterin.</p>
+          <p class="text-xs text-amber-300/80 italic pt-2">✨ Tavsiye: Odaklanmanızı tek bir ana konuya yöneltmeyi başarsanız harikalar yaratırsınız.</p>
+        ` 
+      },
+      Cancer: { 
+        icon: "♋", 
+        date: "21 Haziran - 22 Temmuz", 
+        name: "YENGEÇ BURCU", 
+        content: `
+          <p class="leading-relaxed"><strong class="text-amber-300">Günün Genel Kozmik Durumu:</strong> Yönetici gezegeniniz Ay'ın derin sezgisel açıları iç dünyanızı ve duygusal atmosferinizi aydınlatıyor. Rüyalarınız ve önsezileriniz bu dönemde kehanet niteliğinde çalışabilir.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Aşk & İlişkiler:</strong> Duygusal derinlik ve şefkat arayışınız artıyor. Sevdiklerinizi koruma ve besleme güdünüzle ailevi ve romantik bağlarınızı sarsılmaz hale getireceksiniz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Kariyer & Finans:</strong> Sezgilerinize dayanarak alacağınız kararlar finansal alanda sizi yanıltmayacak. Ev ve mülk odaklı yatırımlar gündeme gelebilir.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Sağlık & Enerji:</strong> Mide ve sindirim sisteminiz duygusal dalgalanmalardan etkilenebilir. Beslenmenize ekstra özen gösterin.</p>
+          <p class="text-xs text-amber-300/80 italic pt-2">✨ Tavsiye: Mantığınızın tıkandığı yerde iç sesinize güvenin.</p>
+        ` 
+      },
+      Leo: { 
+        icon: "♌", 
+        date: "23 Temmuz - 22 Ağustos", 
+        name: "ASLAN BURCU", 
+        content: `
+          <p class="leading-relaxed"><strong class="text-amber-300">Günün Genel Kozmik Durumu:</strong> Yönetici gezegeniniz Güneş'in parlak ışığı altındasınız. Doğal karizmanız, aura gücünüz ve özgüveniniz girdiğiniz her ortamda gözleri üzerinize çekiyor.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Aşk & İlişkiler:</strong> Romantik ve cömert jestlerle partnerinizin kalbini bir kez daha fethedebilirsiniz. Yalnız Aslanlar için sahneye çıkma ve yeni aşklara yelken açma vakti.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Kariyer & Finans:</strong> Liderlik vasıflarınız üstlerinizin dikkatini çekecek. Yaratıcı projelerinizi cesaretle sunabilir, finansal beklentilerinizi artırabilirsiniz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Sağlık & Enerji:</strong> Kalp ve sırt bölgenizi korumalısınız. Yüksek tempolu egzersizlerde aşırıya kaçmamaya dikkat edin.</p>
+          <p class="text-xs text-amber-300/80 italic pt-2">✨ Tavsiye: Işığınızı paylaşırken alçakgönüllülüğü koruyun.</p>
+        ` 
+      },
+      Virgo: { 
+        icon: "♍", 
+        date: "23 Ağustos - 22 Eylül", 
+        name: "BAŞAK BURCU", 
+        content: `
+          <p class="leading-relaxed"><strong class="text-amber-300">Günün Genel Kozmik Durumu:</strong> Analitik zekanız, detaycılığınız ve düzen kurma yeteneğiniz sayesinde karmaşık görünen tüm problemleri tereyağından kıl çeker gibi çözüyorsunuz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Aşk & İlişkiler:</strong> İlişkide mükemmeliyetçi beklentilerinizi bir kenara bırakıp anın getirdiği samimiyete odaklanırsanız huzuru yakalayacaksınız.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Kariyer & Finans:</strong> Çalışma ortamınızdaki organizasyon başarınız iş arkadaşlarınız için rehber niteliğinde. Bütçe yönetimi ve harcama kontrolünde şans sizden yana.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Sağlık & Enerji:</strong> Aşırı kaygı ve detaycılık mide hassasiyetine sebep olabilir. Zihninizi esnetmeyi deneyin.</p>
+          <p class="text-xs text-amber-300/80 italic pt-2">✨ Tavsiye: Her şeyi kontrol edemezsiniz; biraz da evrenin akışına güvenin.</p>
+        ` 
+      },
+      Libra: { 
+        icon: "♎", 
+        date: "23 Eylül - 22 Ekim", 
+        name: "TERAZİ BURCU", 
+        content: `
+          <p class="leading-relaxed"><strong class="text-amber-300">Günün Genel Kozmik Durumu:</strong> Venüs'ün zarafet ve estetik getiren etkileri yaşam enerjinizi yükseltiyor. Sanatsal konular, sosyal ilişkiler ve denge arayışı günün ana teması.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Aşk & İlişkiler:</strong> İkili ilişkilerinizde tam bir uyum ve romantizm hakim. Partnerinizle anlaşmazlıkları tatlı dille çözebilir, romantik bir akşam geçirebilirsiniz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Kariyer & Finans:</strong> Diplomatik tavrınız iş ortamındaki krizleri önleyecek. Ortaklı projeler ve yeni anlaşmalar için kozmik kapılar açık.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Sağlık & Enerji:</strong> Böbrek ve bel bölgenizi korumak adına bol su tüketmeyi ihmal etmeyin.</p>
+          <p class="text-xs text-amber-300/80 italic pt-2">✨ Tavsiye: Başkalarını mutlu ederken kendi isteklerinizi ertelemeyin.</p>
+        ` 
+      },
+      Scorpio: { 
+        icon: "♏", 
+        date: "23 Ekim - 21 Kasım", 
+        name: "AKREP BURCU", 
+        content: `
+          <p class="leading-relaxed"><strong class="text-amber-300">Günün Genel Kozmik Durumu:</strong> Plüton'un dönüştürücü ve derin gücüyle gizli kalmış gerçekleri gün yüzüne çıkarıyorsunuz. Sezgilerinizin keskinliği karşısında hiçbir gizem gizli kalamaz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Aşk & İlişkiler:</strong> Tutkulu ve derin bağlar kurma arayışınız zirvede. Kıskançlık veya kısıtlayıcı tutumlardan uzak durarak ilişkinizde büyük bir ruhsal dönüşüm başlatabilirsiniz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Kariyer & Finans:</strong> Stratejik hamleler ve gizli yürütülen projeler meyvelerini vermeye başlayacak. Finansal krizleri fırsata çevirme gücüne sahipsiniz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Sağlık & Enerji:</strong> Üreme ve boşaltım sisteminizi korumalı, detoks etkisi yapan gıdalara yönelmelisiniz.</p>
+          <p class="text-xs text-amber-300/80 italic pt-2">✨ Tavsiye: Şüpheciliği bırakıp güvenmeyi seçtiğinizde güç sizinle olacaktır.</p>
+        ` 
+      },
+      Sagittarius: { 
+        icon: "♐", 
+        date: "22 Kasım - 21 Aralık", 
+        name: "YAY BURCU", 
+        content: `
+          <p class="leading-relaxed"><strong class="text-amber-300">Günün Genel Kozmik Durumu:</strong> Yönetici gezegeniniz Jüpiter'in getirdiği neşe, iyimserlik ve macera ruhuyla yeni ufuklara yelken açıyorsunuz. Hayata geniş bir pencereden bakıyorsunuz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Aşk & İlişkiler:</strong> İlişkinize heyecan ve özgürlük katacak ortak seyahat planları yapabilirsiniz. Yalnız Yaylar farklı kültürlerden insanlarla çekim yaşayabilir.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Kariyer & Finans:</strong> Akademik, yurt dışı bağlantılı veya medya odaklı işlerde şans sizden yana. Yatırımlarınızda cesur ama temkinli olun.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Sağlık & Enerji:</strong> Kalça ve uyluk bölgesinde kas ağrıları olabilir. Spor öncesi ısınmayı unutmayın.</p>
+          <p class="text-xs text-amber-300/80 italic pt-2">✨ Tavsiye: İnancınızı ve coşkunuzu çevrenize yaymaya devam edin.</p>
+        ` 
+      },
+      Capricorn: { 
+        icon: "♑", 
+        date: "22 Aralık - 19 Ocak", 
+        name: "OĞLAK BURCU", 
+        content: `
+          <p class="leading-relaxed"><strong class="text-amber-300">Günün Genel Kozmik Durumu:</strong> Yönetici gezegeniniz Satürn'ün sarsılmaz disiplini ve ciddiyetiyle uzun vadeli hedeflerinize doğru emin adımlarla ilerliyorsunuz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Aşk & İlişkiler:</strong> İş yoğunluğunuz arasında sevdiklerinize zaman ayırmayı ihmal etmeyin. Duygularınızı ifade etmek aranızdaki duvarları yıkacaktır.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Kariyer & Finans:</strong> Üst yönetimin ve otorite figürlerinin saygısını kazanacaksınız. Sabırla inşa ettiğiniz finansal yapınız giderek güçleniyor.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Sağlık & Enerji:</strong> İskelet sistemi, dizler ve diş sağlığına dikkat etmeli, kalsiyum alımını desteklemelisiniz.</p>
+          <p class="text-xs text-amber-300/80 italic pt-2">✨ Tavsiye: Başarı kadar dinlenmenin de bir ihtiyaç olduğunu unutmayın.</p>
+        ` 
+      },
+      Aquarius: { 
+        icon: "♒", 
+        date: "20 Ocak - 18 Şubat", 
+        name: "KOVA BURCU", 
+        content: `
+          <p class="leading-relaxed"><strong class="text-amber-300">Günün Genel Kozmik Durumu:</strong> Uranüs'ün yenilikçi ve sıradışı enerjisiyle vizyoner projelerinize odaklanıyorsunuz. Toplumsal konular ve teknoloji alanında parlak fikirler üreteceksiniz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Aşk & İlişkiler:</strong> İlişkinizde zihinsel özgürlük ve arkadaşlık bağı ön planda. Sıradışı ve kalıpların dışındaki paylaşımlar bağınızı güçlendirir.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Kariyer & Finans:</strong> Takım çalışmalarında yenilikçi fikirlerinizle fark yaratacaksınız. Dijital yatırımlar ve geleceğin projeleri kazanç getirebilir.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Sağlık & Enerji:</strong> Dolaşım sistemi ve ayak bilekleri hassaslaşabilir. Düzenli kan dolaşımı egzersizleri yapın.</p>
+          <p class="text-xs text-amber-300/80 italic pt-2">✨ Tavsiye: Özgünlüğünüzden asla taviz vermeyin.</p>
+        ` 
+      },
+      Pisces: { 
+        icon: "♓", 
+        date: "19 Şubat - 20 Mart", 
+        name: "BALIK BURCU", 
+        content: `
+          <p class="leading-relaxed"><strong class="text-amber-300">Günün Genel Kozmik Durumu:</strong> Yönetici gezegeniniz Neptün'ün büyüleyici ilhamıyla yaratıcılığınız ve ruhsal derinliğiniz zirve yapıyor. Evrenle bir olma hissini derinden yaşıyorsunuz.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Aşk & İlişkiler:</strong> Romantik ve masalsı bir atmosfer sizi bekliyor. Partnerinize karşı duyduğunuz koşulsuz sevgi aranızdaki tüm kırgınlıkları eritecek.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Kariyer & Finans:</strong> Sanatsal ve ilham gerektiren işlerde büyük başarılar yakalayabilirsiniz. Maddi konularda gerçekçi ayakların yere basması gerek.</p>
+          <p class="leading-relaxed"><strong class="text-amber-200">Sağlık & Enerji:</strong> Lenf sistemi ve ayaklar hassaslaşabilir. Ilık su banyoları ve masaj ruhen ve bedenen iyi gelecektir.</p>
+          <p class="text-xs text-amber-300/80 italic pt-2">✨ Tavsiye: Hayallerinizi somut adımlarla gerçeğe dönüştürün.</p>
+        ` 
+      }
+    };
+
+    // --- SİSTEM BAŞLATICI ---
+    window.addEventListener('DOMContentLoaded', () => {
+      saveAllUsersToStorage();
+      renderAuthBar();
+      renderZodiacGrid();
+      selectZodiac('Aries');
+      initCanvas();
+    });
+
+    function saveAllUsersToStorage() {
+      localStorage.setItem('lunara_all_users', JSON.stringify(allUsers));
+    }
+
+    function saveReadingsToStorage() {
+      localStorage.setItem('lunara_readings', JSON.stringify(readingHistory));
+    }
+
+    function addReadingRecord(type, detail, fullText) {
+      const uName = currentUser ? currentUser.name : "Misafir Kullanıcı";
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10) + " " + now.toTimeString().slice(0, 5);
+      readingHistory.unshift({ 
+        date: dateStr, 
+        userName: uName, 
+        type: type, 
+        detail: detail,
+        fullText: fullText || detail 
+      });
+      saveReadingsToStorage();
+    }
+
+    function renderZodiacGrid() {
+      const grid = document.getElementById('zodiac-grid');
+      grid.innerHTML = '';
+      Object.keys(zodiacData).forEach(key => {
+        const z = zodiacData[key];
+        grid.innerHTML += `
+          <button onclick="selectZodiac('${key}')" class="glass-card p-3 sm:p-4 rounded-2xl text-center hover:border-amber-400 transition">
+            <div class="text-2xl mb-1">${z.icon}</div>
+            <div class="text-xs font-bold text-slate-300">${z.name}</div>
+          </button>
+        `;
+      });
+    }
+
+    function selectZodiac(key) {
+      currentZodiacKey = key;
+      const z = zodiacData[key] || zodiacData['Aries'];
+      
+      document.getElementById('selected-zodiac-icon').innerText = z.icon;
+      document.getElementById('selected-zodiac-name').innerText = z.name;
+      document.getElementById('selected-zodiac-date').innerText = z.date;
+      document.getElementById('zodiac-long-content').innerHTML = z.content || `<p class="text-slate-400">Gezegen hareketleri inceleniyor, günlük yorum hazırlanıyor...</p>`;
+    }
+
+    function renderAuthBar() {
+      const container = document.getElementById('auth-container');
+      if (currentUser) {
+        const isAdmin = currentUser.email === 'admin@lunara.ai' || currentUser.isAdmin;
+        container.innerHTML = `
+          <div class="flex items-center space-x-3">
+            ${isAdmin ? `
+              <button onclick="openAdminPanelModal()" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-amber-400 to-amber-500 text-obsidian shadow-md hover:opacity-90 transition flex items-center gap-1.5">
+                <i data-lucide="shield-check" class="w-4 h-4"></i> Admin Paneli
+              </button>
+            ` : ''}
+            <div onclick="openUserPanelModal()" class="cursor-pointer flex items-center gap-2 bg-purple-900/40 border border-purple-500/30 hover:border-amber-400 px-3 py-1.5 rounded-xl transition">
+              <i data-lucide="coins" class="w-4 h-4 text-amber-400"></i>
+              <span class="text-xs font-bold text-amber-200">${currentUser.credits} Kredi</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openUserPanelModal()" class="flex items-center gap-2 hover:opacity-80 transition">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                  ${currentUser.name.charAt(0).toUpperCase()}
+                </div>
+                <span class="text-xs font-medium text-slate-300 hidden sm:inline">${currentUser.name}</span>
+              </button>
+              <button onclick="logout()" class="p-1.5 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition" title="Çıkış Yap">
+                <i data-lucide="log-out" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <button onclick="openAuthModal('login')" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/5 transition border border-white/10">
+              Giriş Yap
+            </button>
+            <button onclick="openAuthModal('register')" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-obsidian bg-gradient-to-r from-amber-400 to-amber-500 hover:opacity-90 transition shadow-md shadow-amber-500/20">
+              Üye Ol
+            </button>
+          </div>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-purple-900/50', 'border', 'border-purple-500/30', 'text-white');
+        btn.classList.add('text-slate-300');
+      });
+
+      const targetTab = document.getElementById(`tab-${tabId}`);
+      if (targetTab) targetTab.classList.remove('hidden');
+
+      const targetNav = document.getElementById(`nav-${tabId}`);
+      if (targetNav) targetNav.classList.add('bg-purple-900/50', 'border', 'border-purple-500/30', 'text-white');
+    }
+
+    function openAuthModal(mode) {
+      document.getElementById('auth-modal').classList.remove('hidden');
+      switchAuthMode(mode);
+    }
+    function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
+    
+    function switchAuthMode(mode) {
+      const loginForm = document.getElementById('login-form');
+      const regForm = document.getElementById('register-form');
+      if (mode === 'login') {
+        loginForm.classList.remove('hidden');
+        regForm.classList.add('hidden');
+      } else {
+        regForm.classList.remove('hidden');
+        loginForm.classList.add('hidden');
+      }
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      let foundUser = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (!foundUser) {
+        foundUser = { 
+          name: email.split('@')[0], 
+          email: email, 
+          credits: email === 'admin@lunara.ai' ? 9999 : 100,
+          birthDate: '',
+          birthCity: '',
+          isAdmin: email === 'admin@lunara.ai'
+        };
+        allUsers.push(foundUser);
+        saveAllUsersToStorage();
+      }
+      currentUser = foundUser;
+      localStorage.setItem('lunara_user', JSON.stringify(currentUser));
+      renderAuthBar();
+      closeAuthModal();
+    }
+
+    function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('reg-name').value;
+      const email = document.getElementById('reg-email').value;
+      currentUser = { 
+        name: name, 
+        email: email, 
+        credits: 200,
+        birthDate: '',
+        birthCity: '',
+        isAdmin: false
+      };
+      allUsers.push(currentUser);
+      saveAllUsersToStorage();
+      localStorage.setItem('lunara_user', JSON.stringify(currentUser));
+      renderAuthBar();
+      closeAuthModal();
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem('lunara_user');
+      renderAuthBar();
+    }
+
+    // --- KULLANICI PANANLİ ---
+    function openUserPanelModal() {
+      if (!currentUser) return openAuthModal('login');
+      
+      document.getElementById('panel-avatar').innerText = currentUser.name.charAt(0).toUpperCase();
+      document.getElementById('panel-user-name').innerText = currentUser.name;
+      document.getElementById('panel-user-email').innerText = currentUser.email;
+      document.getElementById('panel-credit-amount').innerText = `${currentUser.credits} Kredi`;
+
+      document.getElementById('profile-name').value = currentUser.name || '';
+      document.getElementById('profile-email').value = currentUser.email || '';
+      document.getElementById('profile-birthdate').value = currentUser.birthDate || '';
+      document.getElementById('profile-birthcity').value = currentUser.birthCity || '';
+
+      document.getElementById('user-panel-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeUserPanelModal() {
+      document.getElementById('user-panel-modal').classList.add('hidden');
+    }
+
+    function saveUserProfile(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+      currentUser.name = document.getElementById('profile-name').value;
+      currentUser.birthDate = document.getElementById('profile-birthdate').value;
+      currentUser.birthCity = document.getElementById('profile-birthcity').value;
+      
+      let idx = allUsers.findIndex(u => u.email === currentUser.email);
+      if (idx !== -1) allUsers[idx] = currentUser;
+      saveAllUsersToStorage();
+
+      localStorage.setItem('lunara_user', JSON.stringify(currentUser));
+      renderAuthBar();
+      alert('Kişisel bilgileriniz başarıyla güncellendi!');
+    }
+
+    function changePassword(e) {
+      e.preventDefault();
+      document.getElementById('pass-current').value = '';
+      document.getElementById('pass-new').value = '';
+      alert('Şifreniz başarıyla değiştirildi.');
+    }
+
+    // --- ADMIN PANELİ (SİLME, KREDİ EKLEME & YORUMLARI OKUMA VE SİLME) ---
+    function openAdminPanelModal() {
+      renderAdminUsersTable();
+      renderAdminReadingsTable();
+      document.getElementById('admin-panel-modal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function closeAdminPanelModal() {
+      document.getElementById('admin-panel-modal').classList.add('hidden');
+    }
+
+    function switchAdminTab(tab) {
+      const uBtn = document.getElementById('admin-tab-users-btn');
+      const rBtn = document.getElementById('admin-tab-readings-btn');
+      const uTab = document.getElementById('admin-tab-users');
+      const rTab = document.getElementById('admin-tab-readings');
+
+      if (tab === 'users') {
+        uTab.classList.remove('hidden');
+        rTab.classList.add('hidden');
+        uBtn.classList.add('border-amber-400', 'text-amber-300');
+        uBtn.classList.remove('border-transparent', 'text-slate-400');
+        rBtn.classList.remove('border-amber-400', 'text-amber-300');
+        rBtn.classList.add('border-transparent', 'text-slate-400');
+      } else {
+        rTab.classList.remove('hidden');
+        uTab.classList.add('hidden');
+        rBtn.classList.add('border-amber-400', 'text-amber-300');
+        rBtn.classList.remove('border-transparent', 'text-slate-400');
+        uBtn.classList.remove('border-amber-400', 'text-amber-300');
+        uBtn.classList.add('border-transparent', 'text-slate-400');
+      }
+    }
+
+    function renderAdminUsersTable() {
+      const tbody = document.getElementById('admin-users-list');
+      tbody.innerHTML = '';
+      if (allUsers.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400">Sistemde kayıtlı üye bulunmuyor.</td></tr>`;
+        return;
+      }
+      allUsers.forEach((u, index) => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-white/5 transition">
+            <td class="py-3 px-3 font-semibold text-white">${u.name} ${u.isAdmin ? '<span class="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded ml-1">Admin</span>' : ''}</td>
+            <td class="py-3 px-3 text-slate-300">${u.email}</td>
+            <td class="py-3 px-3 text-slate-400">${u.birthDate || 'Belirtilmemiş'} / ${u.birthCity || '-'}</td>
+            <td class="py-3 px-3 text-amber-300 font-bold">${u.credits} Kredi</td>
+            <td class="py-3 px-3 text-right space-x-1">
+              <button onclick="openAdminEditUserModal(${index})" class="px-2.5 py-1 bg-purple-900/60 hover:bg-purple-800 text-amber-200 rounded-lg border border-purple-500/30 transition">
+                Düzenle / Kredi
+              </button>
+              ${!u.isAdmin ? `
+                <button onclick="deleteUser(${index})" class="px-2.5 py-1 bg-red-950/60 hover:bg-red-900 text-red-200 rounded-lg border border-red-500/30 transition">
+                  Sil
+                </button>
+              ` : ''}
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function deleteUser(index) {
+      const userToDelete = allUsers[index];
+      if (confirm(`"${userToDelete.name}" adlı üyeyi silmek istediğinize emin misiniz?`)) {
+        allUsers.splice(index, 1);
+        saveAllUsersToStorage();
+        renderAdminUsersTable();
+        alert('Üye sistemden silindi.');
+      }
+    }
+
+    function renderAdminReadingsTable() {
+      const tbody = document.getElementById('admin-readings-list');
+      tbody.innerHTML = '';
+      if (readingHistory.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400">Henüz baktırılan bir fal bulunmuyor.</td></tr>`;
+        return;
+      }
+      readingHistory.forEach((r, idx) => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-white/5 transition">
+            <td class="py-3 px-3 text-slate-400 whitespace-nowrap">${r.date}</td>
+            <td class="py-3 px-3 font-medium text-white">${r.userName}</td>
+            <td class="py-3 px-3 text-amber-300 font-semibold">${r.type}</td>
+            <td class="py-3 px-3 text-slate-300">${r.detail}</td>
+            <td class="py-3 px-3 text-right space-x-1">
+              <button onclick="viewReadingDetail(${idx})" class="px-2.5 py-1 bg-gradient-to-r from-amber-500/20 to-purple-600/30 hover:border-amber-400 border border-purple-500/40 text-amber-200 rounded-lg transition font-medium">
+                Yorumu Oku
+              </button>
+              <button onclick="deleteReadingRecord(${idx})" class="px-2.5 py-1 bg-red-950/60 hover:bg-red-900 text-red-200 rounded-lg border border-red-500/30 transition font-medium">
+                Sil
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function deleteReadingRecord(index) {
+      const reading = readingHistory[index];
+      if (confirm(`"${reading.userName}" kullanıcısına ait bu fal/analiz kaydını silmek istediğinize emin misiniz?`)) {
+        readingHistory.splice(index, 1);
+        saveReadingsToStorage();
+        renderAdminReadingsTable();
+        alert('Fal/analiz kaydı başarıyla silindi.');
+      }
+    }
+
+    function viewReadingDetail(index) {
+      const reading = readingHistory[index];
+      if (!reading) return;
+
+      document.getElementById('reading-modal-type').innerText = reading.type;
+      document.getElementById('reading-modal-user').innerText = reading.userName;
+      document.getElementById('reading-modal-date').innerText = reading.date;
+      document.getElementById('reading-modal-content').innerHTML = reading.fullText || reading.detail;
+
+      document.getElementById('admin-view-reading-modal').classList.remove('hidden');
+    }
+
+    function closeAdminReadingModal() {
+      document.getElementById('admin-view-reading-modal').classList.add('hidden');
+    }
+
+    function openAdminEditUserModal(index) {
+      const u = allUsers[index];
+      document.getElementById('admin-edit-index').value = index;
+      document.getElementById('admin-edit-name').value = u.name;
+      document.getElementById('admin-edit-email').value = u.email;
+      document.getElementById('admin-edit-birthdate').value = u.birthDate || '';
+      document.getElementById('admin-edit-birthcity').value = u.birthCity || '';
+      document.getElementById('admin-edit-credits').value = u.credits;
+
+      document.getElementById('admin-edit-user-modal').classList.remove('hidden');
+    }
+
+    function closeAdminEditUserModal() {
+      document.getElementById('admin-edit-user-modal').classList.add('hidden');
+    }
+
+    function saveAdminEditedUser(e) {
+      e.preventDefault();
+      const idx = document.getElementById('admin-edit-index').value;
+      if (allUsers[idx]) {
+        allUsers[idx].name = document.getElementById('admin-edit-name').value;
+        allUsers[idx].email = document.getElementById('admin-edit-email').value;
+        allUsers[idx].birthDate = document.getElementById('admin-edit-birthdate').value;
+        allUsers[idx].birthCity = document.getElementById('admin-edit-birthcity').value;
+        allUsers[idx].credits = parseInt(document.getElementById('admin-edit-credits').value) || 0;
+
+        saveAllUsersToStorage();
+        if (currentUser && currentUser.email === allUsers[idx].email) {
+          currentUser = allUsers[idx];
+          localStorage.setItem('lunara_user', JSON.stringify(currentUser));
+        }
+        renderAuthBar();
+        renderAdminUsersTable();
+        closeAdminEditUserModal();
+        alert('Üye bilgileri ve kredisi güncellendi!');
+      }
+    }
+
+    // --- KREDİ SATIN ALMA ---
+    function openPurchaseModal(packageName, price, credits) {
+      selectedPackageCredits = credits;
+      document.getElementById('modal-package-name').innerText = packageName;
+      document.getElementById('modal-package-price').innerText = 'Tutar: ₺' + price;
+      document.getElementById('purchase-modal').classList.remove('hidden');
+    }
+    function closePurchaseModal() { document.getElementById('purchase-modal').classList.add('hidden'); }
+
+    function confirmPayment(e) {
+      e.preventDefault();
+      if (!currentUser) currentUser = { name: "Kullanıcı", email: "kullanici@lunara.ai", credits: 0 };
+      currentUser.credits += selectedPackageCredits;
+      
+      let idx = allUsers.findIndex(u => u.email === currentUser.email);
+      if (idx !== -1) allUsers[idx].credits = currentUser.credits;
+      saveAllUsersToStorage();
+
+      localStorage.setItem('lunara_user', JSON.stringify(currentUser));
+      renderAuthBar();
+      closePurchaseModal();
+      alert(`Tebrikler! ${selectedPackageCredits} Kredi hesabınıza yüklendi.`);
+    }
+
+    // --- DOĞUM HARİTASI ---
+    function generateBirthChart(e) {
+      e.preventDefault();
+      const name = document.getElementById('bc-name').value;
+      const date = document.getElementById('bc-date').value;
+      const city = document.getElementById('bc-city').value;
+
+      const fullAnalysisHtml = `
+        <p class="leading-relaxed">Değerli <strong class="text-amber-200">${name}</strong>, <span class="text-cyan-300">${date}</span> tarihinde <span class="text-cyan-300">${city}</span> göğünde parlayan yıldızlar ve gezegen konumları süzülerek haritanız çıkarılmıştır. Doğum anınız, kozmik çarkların sizin ruhsal evriminiz için özel olarak hizalandığı benzersiz bir portalı temsil etmektedir.</p>
+
+        <p class="leading-relaxed"><strong class="text-amber-300">🌙 Güneş, Ay ve Yükselen Çemberi:</strong> Ruhsal özünüzü, bilinçaltı dürtülerinizi ve dış dünyaya yansıttığınız mistik maskenizi simgeleyen bu üçlü çember; yaşam yolculuğunuzdaki en temel pusulanızdır. Sezgilerinizin yüksekliği ve hissel algınız, karşılaştığınız insanları analiz etmede size olağanüstü bir güç vermektedir.</p>
+
+        <p class="leading-relaxed"><strong class="text-amber-300">✨ Karmik Bağlar ve Aşk Evi:</strong> Haritanızdaki gezegen açıları, ruh eşi ve geçmiş yaşam ilişkileri evinizde önemli düğümlerin çözülmekte olduğunu gösteriyor. İkili ilişkilerinizde geçmiş kırgınlıkları geride bırakıp gerçek ve tutkulu bir ruhsal bağa adım atacağınız kozmik bir döneme girmektesiniz.</p>
+
+        <p class="leading-relaxed"><strong class="text-amber-300">🪐 Kariyer ve Finansal Portal:</strong> Jüpiter ve Satürn'ün destekleyici konumlanışı, kariyer alanında uzun süredir emek verdiğiniz projenizin nihayet meyvelerini vereceğini müjdeliyor. Maddi birikimlerinizi katlayabileceğiniz yeni fırsat kapıları aralanıyor.</p>
+
+        <p class="text-xs text-amber-300/80 italic pt-2 border-t border-white/10">✨ Mistik Rehberlik: İçsel gücünüzü kısıtlayan tüm korkuları serbest bırakın; evren sizi koruyor ve destekliyor.</p>
+      `;
+
+      document.getElementById('chart-result-text').innerHTML = fullAnalysisHtml;
+      document.getElementById('chart-result').classList.remove('hidden');
+      
+      addReadingRecord("Doğum Haritası", `${name} (${date} - ${city}) Detaylı Harita`, fullAnalysisHtml);
+    }
+
+    // 3D KART DÖNME İLE TAROT FAL
+    function drawTarotCard(cardNum, spreadType) {
+      const cardInner = document.getElementById(`tarot-card-inner-${cardNum}`);
+      if (!cardInner) return;
+
+      cardInner.classList.add('flipped');
+
+      const cardData = tarotDeck[(cardNum - 1) % tarotDeck.length];
+
+      document.getElementById(`tarot-icon-${cardNum}`).innerText = cardData.icon;
+      document.getElementById(`tarot-title-${cardNum}`).innerText = cardData.name.split(' ')[0];
+
+      const resultBox = document.getElementById('tarot-result');
+      document.getElementById('tarot-card-name').innerText = `${spreadType} - ${cardData.name}`;
+      document.getElementById('tarot-card-desc').innerHTML = cardData.desc;
+      
+      resultBox.classList.remove('hidden');
+      addReadingRecord("Tarot Falı", `${spreadType} - ${cardData.name}`, cardData.desc);
+    }
+
+    // --- GERÇEK FİNCAN GÖRSELİ YÜKLEME & DİNAMİK YORUM HAVUZU (HER SEFERİNDE FARKLI) ---
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        uploadedImageBase64 = e.target.result;
+        document.getElementById('preview-img').src = uploadedImageBase64;
+        document.getElementById('upload-placeholder').classList.add('hidden');
+        document.getElementById('upload-preview').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function triggerCoffeeAnalysis() {
+      if (!currentUser) {
+        alert('Fal baktırmak için lütfen önce giriş yapın.');
+        openAuthModal('login');
+        return;
+      }
+
+      if (currentUser.credits < 30) {
+        alert('Kahve falı için en az 30 Krediniz olmalıdır. Lütfen bakiye yükleyin.');
+        openPurchaseModal('Mistik Pro', 600, 550);
+        return;
+      }
+
+      if (!uploadedImageBase64) {
+        alert('Lütfen önce fincanınızın veya tabağınızın fotoğrafını yükleyin.');
+        return;
+      }
+
+      // Kredi Düşümü
+      currentUser.credits -= 30;
+      let idx = allUsers.findIndex(u => u.email === currentUser.email);
+      if (idx !== -1) allUsers[idx].credits = currentUser.credits;
+      saveAllUsersToStorage();
+      localStorage.setItem('lunara_user', JSON.stringify(currentUser));
+      renderAuthBar();
+
+      // DİNAMİK RASTGELE YORUM HAVUZLARI
+      const dipHavuzu = [
+        "Fincanın dip kısmındaki yoğun telve birikintisi, uzun süredir göğsünüzde ve zihninizde taşıdığınız ağır yüklerin artık son demlerine geldiğini gösteriyor.",
+        "Fincanın tabanındaki aydınlık açıklık, ruhsal bir ferahlama ve kilitli kalmış duygusal süreçlerin serbest kalacağı aydınlık bir dönemi müjdeliyor.",
+        "Dipteki telve kümelenmesi, yakın zamanda vereceğiniz radikal bir kararın ailevi ve kişisel konularda büyük bir dengelenme yaratacağını gösteriyor.",
+        "Fincanın dip noktasındaki derin halkalar, geçmişte ertelediğiniz içsel bir hesabın çözüme kavuşarak ruhunuzu özgürleştireceğini işaret ediyor."
+      ];
+
+      const yolHavuzu = [
+        "Telvelerin kenarlardan yukarıya doğru çizdiği kıvrımlarda net bir <strong>uzun yol</strong> ve bu yolun ucunda duran aydınlık kapı simgesi belirmiş.",
+        "Fincan duvarında kıvrılan ince telve hatları, sürpriz bir seyahati veya iş vesilesiyle gerçekleşecek şehir değişikliğini simgeliyor.",
+        "Yukarıdan aşağıya doğru süzülen aydınlık kulvarlar, uzun süredir iletişiminizin koptuğu uzak bir dosttan gelecek sevindirici habere işaret ediyor.",
+        "Telvelerin oluşturduğu basamaklı yol simgesi, kariyerinizde adım adım tırmanacağınız ve saygınlık kazanacağınız bir dönemi gösteriyor."
+      ];
+
+      const sembolHavuzu = [
+        "Fincanın kulp tarafında beliren <strong>kuş ve anahtar figürleri</strong>, hanenize dökülecek müjdeli haberlere ve kilitli kalmış maddi düğümlerin çözülmesine işaret ediyor.",
+        "Kulp hizasındaki <strong>balık ve ağaç sembolü</strong>, önümüzdeki günlerde finansal açıdan yakalayacağınız bereketi ve köklü bir fırsat kapısını temsil ediyor.",
+        "Gövdede süzülen <strong>güneş ve kelebek sembolleri</strong>, üzerinizdeki nazarın dağıldığını ve ilişkilerde heyecan verici bir uyanış yaşayacağınızı gösteriyor.",
+        "Kenarda beliren <strong>mühür ve taç simgesi</strong>, resmi bir kurumla ilgili beklediğiniz kararın tamamen sizin lehinize sonuçlanacağını müjdeliyor."
+      ];
+
+      const dilekHavuzu = [
+        "Tabağa süzülen telvelerin bıraktığı izler, niyetlendiğiniz dileğin önündeki engellerin birer birer ortadan kalkacağını gösteriyor.",
+        "Tabakta biriken telvenin hızlı akış hızı, kalbinizden geçen niyetin düşündüğünüzden çok daha kısa sürede gerçekleşeceğini işaret ediyor.",
+        "Tabaktaki tam daire şeklindeki halkanın netliği, yakın çevrenizden alacağınız samimi bir destekle büyük bir huzur bulacağınızı söylüyor.",
+        "Tabağın kenarında kalan aydınlık damlalar, hayal ettiğiniz arzunun hanenize mutluluk ve maddi rahatlama getireceğini müjdeliyor."
+      ];
+
+      const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+      const coffeeHtml = `
+        <p class="leading-relaxed">${getRandom(dipHavuzu)}</p>
+        <p class="leading-relaxed">${getRandom(yolHavuzu)}</p>
+        <p class="leading-relaxed">${getRandom(sembolHavuzu)}</p>
+        <p class="leading-relaxed">${getRandom(dilekHavuzu)}</p>
+        <p class="text-xs text-amber-300/80 italic pt-1">✨ Telve İşareti: Yolunuz açık, yakın vakitte alacağınız sevindirici haber hayatınıza ferahlık katacak.</p>
+      `;
+
+      const resultBox = document.getElementById('coffee-result');
+      document.getElementById('coffee-result-text').innerHTML = coffeeHtml;
+
+      resultBox.classList.remove('hidden');
+      addReadingRecord("Kahve Falı", "Fincan Fotoğrafı Analizi ve Yorumu", coffeeHtml);
+    }
+
+    // AI CHAT (DİNAMİK, HER SEFERİNDE FARKLI VE SORUYA BAĞLI YANIT ÜRETİMİ)
+    function sendChatMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const chatBox = document.getElementById('chat-box');
+      if (!input.value.trim()) return;
+
+      const userText = input.value;
+      chatBox.innerHTML += `<div class="bg-indigo-950/60 p-3.5 rounded-2xl max-w-md ml-auto text-xs sm:text-sm text-white shadow-sm border border-indigo-500/20">${userText}</div>`;
+      input.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      setTimeout(() => {
+        // SORUDAN KISA BİR KESİTİ DİNAMİK OLARAK CÜMLE İÇİNE YERLEŞTİREN GİRİŞ PARAGRAFLARI
+        const shortUserQuery = userText.length > 35 ? userText.substring(0, 35) + "..." : userText;
+
+        const p1Havuzu = [
+          `Zihninizdeki "${shortUserQuery}" hakkındaki arayışınız, ruhsal yolculuğunuzdaki önemli bir dönüm noktasını işaret ediyor. Kalbinizde taşıdığınız tereddütler, evrensel akışta kendi yanıtlarını üretmeye başladı bile.`,
+          `Sorduğunuz "${shortUserQuery}" sorusu, hayatınızdaki değişim sancılarının ve yeni bir uyanışın doğrudan yansımasıdır. Zihninizi meşgul eden düğümler yakın zamanda çözülme evresine girecek.`,
+          `Gündeme getirdiğiniz "${shortUserQuery}" konusu, kozmik döngünüzde tamamlanması gereken önemli bir dersi simgeliyor. İç dünyanızdaki kararsızlıklar yerini büyük bir netliğe bırakmak üzere.`,
+          `Dile getirdiğiniz "${shortUserQuery}" hakkındaki düşünceleriniz, yakın gelecekte atacağınız radikal adımların zihinsel hazırlığı niteliğindedir. Sezgilerinizin gücü bu süreçte en büyük pusulanız olacak.`
+        ];
+
+        // ASTROLOJİK VE MİSTİK ASTRO-HAVUZ
+        const p2Havuzu = [
+          "Merkür'ün zihinsel netlik getiren elverişli açıları, karmaşık görünen tüm durumları mantık ve sezgi dengesiyle kolayca aşacağınızı gösteriyor.",
+          "Mars ve Venüs etkileşimi, cesaretle atacağınız adımların ikili ilişkilerde ve kişisel kararlarınızda lehinize sonuçlanacağını müjdeliyor.",
+          "Jüpiter'in genişletici enerjisi, şu an engel gibi görünen gelişmelerin aslında sizin için çok daha büyük fırsat kapılarına dönüştüğünü fısıldıyor.",
+          "Satürn'ün öğretici pozisyonu, geçmiş deneyimlerinizden aldığınız güçle sağlam ve kalıcı temeller atacağınız bir dönemi destekliyor."
+        ];
+
+        // BİLİNÇALTI VE SEZGİSEL REHBERLİK HAVUZU
+        const p3Havuzu = [
+          "Gelecek kaygılarınızı serbest bıraktığınızda, aradığınız yanıtın aslında çok yakınınızda durduğunu ve yanıtın içeriden belirdiğini fark edeceksiniz.",
+          "İç sesinize ve sezgilerinize güvenerek hareket ettiğiniz takdirde hem maddi hem de manevi tatmine ulaşmanız kaçınılmazdır.",
+          "Sabır ve kararlılıkla ilerlediğinizde, kilitli kalmış kapıların ardı ardına açıldığına ve huzurun hanenize döküldüğüne şahit olacaksınız.",
+          "Evrensel zamanlamaya teslim olun; doğru anda atılacak tek bir adım hayatınızda mucizevi dengeler yaratacaktır."
+        ];
+
+        // MİSTİK TAVSİYE VE BİTİŞ KAPANİŞLARI
+        const p4Havuzu = [
+          "✨ Mistik Tavsiye: Endişelerinizi serbest bırakın, evrensel zamanlamaya güvenin ve adımlarınızı cesaretle atın.",
+          "✨ Mistik Tavsiye: Kalbinizin sesini bastırmayın; sezgilerinizin rehberliğinde alacağınız kararlar size ışık tutacak.",
+          "✨ Mistik Tavsiye: Geçmişin yüklerini geride bırakın; kozmik enerjiler yolunuzu aydınlatmaya hazır.",
+          "✨ Mistik Tavsiye: Zihninizdeki şüpheleri eritin; inançla attığınız her adım sizi hedefinize yaklaştıracaktır."
+        ];
+
+        const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+        const aiResponseHtml = `
+          <p>${getRandom(p1Havuzu)}</p>
+          <p>${getRandom(p2Havuzu)}</p>
+          <p>${getRandom(p3Havuzu)}</p>
+          <p class="text-xs text-amber-300/80 italic pt-1">${getRandom(p4Havuzu)}</p>
+        `;
+
+        chatBox.innerHTML += `
+          <div class="bg-purple-900/40 p-4 rounded-2xl max-w-lg text-xs sm:text-sm text-slate-200 border border-purple-500/20 shadow-sm leading-relaxed space-y-2">
+            <strong class="text-amber-300">Lunara AI:</strong>
+            ${aiResponseHtml}
+          </div>
+        `;
+        chatBox.scrollTop = chatBox.scrollHeight;
+        addReadingRecord("AI Rehber Chat", `Soru: "${shortUserQuery}"`, `<strong>Soru:</strong> ${userText}<br><br><strong>Lunara AI Yanıtı:</strong><br>${aiResponseHtml}`);
+      }, 500);
+    }
+
+    function initCanvas() {
+      const canvas = document.getElementById('star-canvas');
+      const ctx = canvas.getContext('2d');
+      let stars = [];
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        stars = Array.from({ length: 70 }, () => ({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 1.5, alpha: Math.random() }));
+      }
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ffffff';
+        stars.forEach(s => { ctx.globalAlpha = s.alpha; ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill(); });
+        requestAnimationFrame(draw);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+      draw();
+    }
+  </script>
+</body>
+</html>
