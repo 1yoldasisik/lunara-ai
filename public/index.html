@@ -1,0 +1,359 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10091c">
+    <meta name="description" content="Lunara AI ile tarot, kahve falı, astroloji, aşk ve numeroloji dünyasını keşfet.">
+    <title>Lunara AI | Gizemli Dünyanı Keşfet</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<header class="header">
+    <a href="#" class="logo"><span>☾</span> LUNARA</a>
+
+    <nav class="nav">
+        <a href="#kesfet">Keşfet</a>
+        <a href="#hakkimizda">Hakkımızda</a>
+        <a href="#uyelik">Üyelik</a>
+    </nav>
+
+    <div class="header-actions" id="guestActions">
+        <button class="login-btn" data-action="auth" data-auth-mode="login">Giriş Yap</button>
+        <button class="register-btn" data-action="auth" data-auth-mode="register">Üye Ol</button>
+    </div>
+
+    <div class="member-actions hidden" id="memberActions">
+        <div class="member-info">
+            <span id="headerUserName">Üye</span>
+        </div>
+        <button class="login-btn hidden" id="adminOpenButton" data-action="admin-open">Yönetim</button>
+        <button class="login-btn" data-member-action="open">Hesabim</button>
+        <button class="login-btn" data-action="logout">Çıkış Yap</button>
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <div class="hero-stars">✦ &nbsp; ✧ &nbsp; · &nbsp; ✦ &nbsp; · &nbsp; ✧</div>
+        <div class="moon">☾</div>
+        <p class="eyebrow">EVRENİN SANA ÖZEL MESAJI</p>
+        <h1>Gizemli Dünyanı<br><span>Keşfet.</span></h1>
+        <p class="hero-description">
+            Yıldızların rehberliğinde kendini tanı. Tarot, astroloji,
+            kahve falı ve daha fazlasıyla kendi hikâyene yeni bir
+            pencereden bak.
+        </p>
+        <a href="#kesfet" class="gold-btn">Keşfe Başla <span>✧</span></a>
+        <div class="hero-bottom">✦ Yıldızların rehberliğinde, kendi yolunda ✦</div>
+    </section>
+
+    <section class="discover section" id="kesfet">
+        <div class="section-heading">
+            <p class="eyebrow">LUNARA DÜNYASI</p>
+            <h2>Seni Neler Bekliyor?</h2>
+            <p>Merak ettiğin her soruya mistik bir yolculukla yaklaş.</p>
+        </div>
+
+        <div class="cards">
+            <article class="feature-card" data-feature="Tarot Falı">
+                <div class="card-icon">✧</div>
+                <h3>Tarot Falı</h3>
+                <p>Kartların sembolik dünyasını keşfet ve kendi yolculuğuna farklı bir açıdan bak.</p>
+                <span class="card-link">Keşfet <b>→</b></span>
+            </article>
+
+            <article class="feature-card" data-feature="Kahve Falı">
+                <div class="card-icon">☕</div>
+                <h3>Kahve Falı</h3>
+                <p>Fincanındaki şekilleri yapay zekâ ile yorumlayarak sembolik bir yolculuğa çık.</p>
+                <span class="card-link">Keşfet <b>→</b></span>
+            </article>
+
+            <article class="feature-card" data-feature="Burçlar">
+                <div class="card-icon">♌</div>
+                <h3>Burçlar</h3>
+                <p>Burcunun günlük, haftalık ve aylık astrolojik yorumlarını keşfet.</p>
+                <span class="card-link">Keşfet <b>→</b></span>
+            </article>
+
+            <article class="feature-card" data-feature="Doğum Haritası">
+                <div class="card-icon">☼</div>
+                <h3>Doğum Haritası</h3>
+                <p>Doğum bilgilerin üzerinden kişisel astrolojik haritanı incele.</p>
+                <span class="card-link">Keşfet <b>→</b></span>
+            </article>
+
+            <article class="feature-card" data-feature="Aşk Falı">
+                <div class="card-icon">♡</div>
+                <h3>Aşk Falı</h3>
+                <p>Aşk, ilişkiler ve duygusal bağlar üzerine özel yorumlarını keşfet.</p>
+                <span class="card-link">Keşfet <b>→</b></span>
+            </article>
+
+            <article class="feature-card" data-feature="Numeroloji">
+                <div class="card-icon">∞</div>
+                <h3>Numeroloji</h3>
+                <p>İsim ve doğum tarihinin numerolojik sembolizmini incele.</p>
+                <span class="card-link">Keşfet <b>→</b></span>
+            </article>
+
+            <article class="feature-card" data-feature="Genel Fal">
+                <div class="card-icon">☽</div>
+                <h3>Genel Fal</h3>
+                <p>Hayatının farklı alanlarına yönelik kapsamlı sembolik yorumlar.</p>
+                <span class="card-link">Keşfet <b>→</b></span>
+            </article>
+
+            <article class="feature-card" data-feature="Kişisel Analiz">
+                <div class="card-icon">✺</div>
+                <h3>Kişisel Analiz</h3>
+                <p>Sana özel hazırlanacak detaylı yapay zekâ analizleri.</p>
+                <span class="card-link">Keşfet <b>→</b></span>
+            </article>
+        </div>
+    </section>
+
+    <section class="about section" id="hakkimizda">
+        <p class="eyebrow">BİR LUNARA YOLCULUĞU</p>
+        <h2>Her hikâyenin içinde<br><span>bir keşif saklıdır.</span></h2>
+        <p>Lunara, astroloji ve spiritüel sembolizmi yapay zekâ teknolojisiyle buluşturan yeni nesil bir keşif platformudur.</p>
+    </section>
+
+    <section class="membership section" id="uyelik">
+        <p class="eyebrow">LUNARA'YA KATIL</p>
+        <h2>Kendi yolculuğunu başlat.</h2>
+        <p>Üye ol, kişisel keşiflerini tek bir yerde biriktir.</p>
+        <button class="gold-btn" data-action="auth" data-auth-mode="register">Lunara'ya Katıl ✧</button>
+    </section>
+</main>
+
+<footer class="footer">
+    <a href="#" class="logo"><span>☾</span> LUNARA</a>
+    <p>© 2026 Lunara AI. Tüm hakları saklıdır.</p>
+    <small>İçerikler eğlence ve kişisel keşif amaçlıdır; kesin gelecek tahmini değildir.</small>
+</footer>
+
+<div class="modal-overlay hidden" id="authModal">
+    <div class="auth-modal">
+        <button class="modal-close" data-action="close-auth" aria-label="Kapat">×</button>
+
+        <div class="modal-brand">☾ LUNARA</div>
+        <p class="eyebrow">KENDİ YOLCULUĞUNA BAŞLA</p>
+
+        <div class="auth-tabs">
+            <button id="loginTab" class="auth-tab active" data-action="switch-auth" data-auth-mode="login">Giriş Yap</button>
+            <button id="registerTab" class="auth-tab" data-action="switch-auth" data-auth-mode="register">Üye Ol</button>
+        </div>
+
+        <form id="loginForm">
+            <label for="loginEmail">E-posta adresi</label>
+            <input id="loginEmail" type="email" autocomplete="email" required maxlength="254" placeholder="ornek@email.com">
+
+            <label for="loginPassword">Şifre</label>
+            <input id="loginPassword" type="password" autocomplete="current-password" required placeholder="Şifreniz">
+
+            <button class="text-link forgot-link" type="button" data-action="forgot-password">Şifremi Unuttum?</button>
+            <button class="gold-btn form-submit" type="submit">Giriş Yap ✧</button>
+        </form>
+
+        <form id="forgotPasswordForm" class="hidden">
+            <p class="password-hint">Hesabınıza kayıtlı e-posta adresini girin. Sıfırlama bağlantısını e-posta ile göndereceğiz.</p>
+            <label for="forgotEmail">E-posta adresi</label>
+            <input id="forgotEmail" type="email" autocomplete="email" required maxlength="254" placeholder="ornek@email.com">
+            <button class="gold-btn form-submit" type="submit">Sıfırlama Bağlantısı Gönder</button>
+            <button class="text-link back-link" type="button" data-action="back-to-login">Giriş ekranına dön</button>
+        </form>
+
+        <form id="resetPasswordForm" class="hidden">
+            <p class="password-hint">Yeni şifreniz en az 10 karakter olmalı; büyük harf, küçük harf ve rakam içermelidir.</p>
+            <label for="resetPassword">Yeni şifre</label>
+            <input id="resetPassword" type="password" autocomplete="new-password" minlength="10" maxlength="72" required placeholder="Yeni şifreniz">
+            <label for="resetPasswordConfirm">Yeni şifre tekrar</label>
+            <input id="resetPasswordConfirm" type="password" autocomplete="new-password" minlength="10" maxlength="72" required placeholder="Yeni şifrenizi tekrar girin">
+            <button class="gold-btn form-submit" type="submit">Şifremi Değiştir</button>
+            <button class="text-link back-link" type="button" data-action="back-to-login">Giriş ekranına dön</button>
+        </form>
+
+        <form id="registerForm" class="hidden">
+            <div class="form-grid">
+                <div>
+                    <label for="firstName">Ad</label>
+                    <input id="firstName" type="text" autocomplete="given-name" minlength="2" maxlength="50" required placeholder="Adınız">
+                </div>
+                <div>
+                    <label for="lastName">Soyad</label>
+                    <input id="lastName" type="text" autocomplete="family-name" minlength="2" maxlength="50" required placeholder="Soyadınız">
+                </div>
+            </div>
+
+            <label for="birthDate">Doğum tarihi</label>
+            <input id="birthDate" type="date" autocomplete="bday" required>
+
+            <label for="registerEmail">E-posta adresi</label>
+            <input id="registerEmail" type="email" autocomplete="email" maxlength="254" required placeholder="ornek@email.com">
+
+            <label for="registerPassword">Şifre</label>
+            <input id="registerPassword" type="password" autocomplete="new-password" minlength="10" maxlength="72" required placeholder="En az 10 karakter">
+
+            <label for="confirmPassword">Şifre tekrar</label>
+            <input id="confirmPassword" type="password" autocomplete="new-password" minlength="10" maxlength="72" required placeholder="Şifrenizi tekrar girin">
+
+            <p class="password-hint">Şifreniz büyük harf, küçük harf ve rakam içermelidir.</p>
+
+            <button class="gold-btn form-submit" type="submit">Ücretsiz Üye Ol ✧</button>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay hidden" id="adminModal">
+    <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+        <div class="admin-heading">
+            <div>
+                <p class="eyebrow">LUNARA CONTROL CENTER</p>
+                <h2 id="adminTitle">Yönetici Paneli</h2>
+            </div>
+            <button class="modal-close" data-action="admin-close" aria-label="Kapat">×</button>
+        </div>
+
+        <div class="admin-stats" id="adminStats">
+            <div class="admin-stat"><span>Toplam üye</span><strong id="statUsers">—</strong></div>
+            <div class="admin-stat"><span>Analiz sayısı</span><strong id="statAnalyses">—</strong></div>
+        </div>
+
+        <div class="admin-section">
+            <div class="admin-section-title">
+                <h3>Üye listesi</h3>
+                <button class="login-btn" data-action="admin-refresh">Yenile</button>
+            </div>
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead><tr><th>ID</th><th>Üye</th><th>E-posta</th><th>Rol</th><th>Kayıt</th></tr></thead>
+                    <tbody id="adminUsersBody"><tr><td colspan="5">Yükleniyor…</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <section class="member-section">
+            <h3>Hesap Guvenligi / Sifre Degistir</h3>
+            <form id="memberPasswordForm" class="member-form">
+                <label for="memberCurrentPassword">Mevcut sifre</label>
+                <input id="memberCurrentPassword" type="password" autocomplete="current-password" required>
+                <label for="memberNewPassword">Yeni sifre</label>
+                <input id="memberNewPassword" type="password" minlength="10" maxlength="72" autocomplete="new-password" required>
+                <label for="memberConfirmPassword">Yeni sifre (tekrar)</label>
+                <input id="memberConfirmPassword" type="password" minlength="10" maxlength="72" autocomplete="new-password" required>
+                <p class="member-hint">En az 10 karakter; buyuk harf, kucuk harf ve rakam icermelidir.</p>
+                <button class="form-submit" type="submit">Sifremi Degistir</button>
+            </form>
+            <p class="member-status" id="memberPasswordStatus" role="status"></p>
+        </section>
+    </section>
+</div>
+
+<div class="modal-overlay hidden" id="analysisModal">
+    <section class="analysis-modal" role="dialog" aria-modal="true" aria-labelledby="analysisTitle">
+        <div class="analysis-heading">
+            <div>
+                <p class="eyebrow">LUNARA AI • GEMINI</p>
+                <h2 id="analysisTitle">Kişisel Analiz</h2>
+                <p class="analysis-subtitle" id="analysisDescription">Sana özel sembolik bir yorum.</p>
+            </div>
+            <button class="modal-close" data-action="analysis-close" aria-label="Kapat">×</button>
+        </div>
+
+        <form id="analysisForm">
+            <input type="hidden" id="analysisType" value="personal">
+
+            <div class="analysis-fields hidden" id="tarotFields">
+                <label for="tarotSpread">Açılım türü</label>
+                <select id="tarotSpread">
+                    <option value="three">Üç kart • Geçmiş / Şimdi / Olasılık</option>
+                    <option value="one">Tek kart</option>
+                    <option value="love">Aşk açılımı</option>
+                    <option value="celtic">Kelt haçı</option>
+                </select>
+                <label for="tarotQuestion">Sorun (isteğe bağlı)</label>
+                <textarea id="tarotQuestion" rows="3" maxlength="1200" placeholder="Aklındaki soruyu yaz..."></textarea>
+            </div>
+
+            <div class="analysis-fields hidden" id="coffeeFields">
+                <label for="coffeeImage">Kahve fincanı fotoğrafı</label>
+                <input id="coffeeImage" type="file" accept="image/jpeg,image/png,image/webp">
+                <p class="analysis-hint">Analizini başlat ve sonucunu analiz geçmişinde sakla.</p>
+                <label for="coffeeQuestion">Eklemek istediğin not (isteğe bağlı)</label>
+                <textarea id="coffeeQuestion" rows="3" maxlength="1200" placeholder="Özellikle yorumlanmasını istediğin bir konu var mı?"></textarea>
+            </div>
+
+            <div class="analysis-fields hidden" id="horoscopeFields">
+                <label for="horoscopeSign">Burcun</label>
+                <select id="horoscopeSign">
+                    <option value="">Burç seçin</option>
+                    <option>Koç</option><option>Boğa</option><option>İkizler</option><option>Yengeç</option>
+                    <option>Aslan</option><option>Başak</option><option>Terazi</option><option>Akrep</option>
+                    <option>Yay</option><option>Oğlak</option><option>Kova</option><option>Balık</option>
+                </select>
+                <label for="horoscopePeriod">Yorum dönemi</label>
+                <select id="horoscopePeriod">
+                    <option value="daily">Günlük</option>
+                    <option value="weekly">Haftalık</option>
+                    <option value="monthly">Aylık</option>
+                </select>
+                <label for="horoscopeQuestion">Ek not (isteğe bağlı)</label>
+                <textarea id="horoscopeQuestion" rows="3" maxlength="1200" placeholder="Özellikle merak ettiğin bir konu..."></textarea>
+            </div>
+
+            <div class="analysis-fields hidden" id="personalFields">
+                <label for="personalFocus">Analiz konusu</label>
+                <select id="personalFocus">
+                    <option>Genel yaşam</option>
+                    <option>Aşk ve ilişkiler</option>
+                    <option>Kariyer ve hedefler</option>
+                    <option>Kişisel gelişim</option>
+                    <option>İçsel denge ve motivasyon</option>
+                </select>
+                <label for="personalQuestion">Kendin hakkında paylaşmak istediklerin</label>
+                <textarea id="personalQuestion" rows="5" maxlength="1200" placeholder="Sorunu, hedefini veya üzerinde düşündüğün konuyu anlat..."></textarea>
+            </div>
+
+            <div class="analysis-actions">
+                <button class="gold-btn form-submit" id="analysisSubmit" type="submit">Analizi Başlat ✧</button>
+            </div>
+            <p class="analysis-hint">Analizini başlat ve sonucunu analiz geçmişinde sakla.</p>
+        </form>
+
+        <div class="analysis-loading hidden" id="analysisLoading">
+            <div class="loading-orbit">☾</div>
+            <strong>Lunara yorumunu hazırlıyor…</strong>
+            <span>Bu işlem birkaç saniye sürebilir.</span>
+        </div>
+
+        <section class="analysis-result hidden" id="analysisResult">
+            <div class="result-topline">
+                <h3 id="analysisResultTitle">Analiz sonucu</h3>
+            </div>
+            <div id="analysisResultContent" class="analysis-result-content"></div>
+            <button class="login-btn" type="button" data-action="analysis-new">Yeni analiz</button>
+        </section>
+
+        <section class="analysis-history">
+            <div class="analysis-history-heading">
+                <h3>Son analizlerin</h3>
+                <button class="history-delete-all-button" type="button" data-action="history-delete-all">T?m?n? Sil</button>
+                <button class="login-btn" type="button" data-action="history-refresh">Yenile</button>
+            </div>
+            <div id="analysisHistoryList"><p class="analysis-hint">Geçmiş yükleniyor…</p></div>
+        </section>
+    </section>
+</div>
+
+<div class="notification" id="notification" role="status" aria-live="polite"></div>
+
+<script src="script.js" defer></script>
+</body>
+</html>
