@@ -33,7 +33,7 @@
             <span id="headerUserName">Üye</span>
         </div>
         <button class="login-btn hidden" id="adminOpenButton" data-action="admin-open">Yönetim</button>
-        <button class="login-btn" data-member-action="open">Hesabim</button>
+        <button class="login-btn" data-member-action="open">Hesabım</button>
         <button class="login-btn" data-action="logout">Çıkış Yap</button>
     </div>
 </header>
@@ -239,19 +239,77 @@
             </div>
         </div>
 
+    </section>
+</div>
+
+<div class="modal-overlay hidden" id="memberModal">
+    <section class="member-modal" role="dialog" aria-modal="true" aria-labelledby="memberTitle">
+        <div class="admin-heading">
+            <div>
+                <p class="eyebrow">LUNARA • HESAP MERKEZİ</p>
+                <h2 id="memberTitle">Hesabım</h2>
+                <p class="member-subtitle">Profil bilgilerini, güvenlik ayarlarını ve analiz geçmişini yönet.</p>
+            </div>
+            <button class="modal-close" type="button" data-member-action="close" aria-label="Kapat">×</button>
+        </div>
+
+        <div class="member-summary">
+            <div><span class="member-label">E-posta</span><strong id="memberSummaryEmail">—</strong></div>
+            <div><span class="member-label">Hesap durumu</span><strong>Aktif</strong></div>
+        </div>
+
         <section class="member-section">
-            <h3>Hesap Guvenligi / Sifre Degistir</h3>
+            <h3>Profil bilgilerim</h3>
+            <form id="memberProfileForm" class="member-form">
+                <label for="memberFirstName">Ad</label>
+                <input id="memberFirstName" type="text" minlength="2" maxlength="50" autocomplete="given-name" required>
+                <label for="memberLastName">Soyad</label>
+                <input id="memberLastName" type="text" minlength="2" maxlength="50" autocomplete="family-name" required>
+                <label for="memberBirthDate">Doğum tarihi</label>
+                <input id="memberBirthDate" type="date" required>
+                <label for="memberBio">Hakkımda</label>
+                <textarea id="memberBio" rows="3" maxlength="1000" placeholder="Kendinden kısaca bahset..."></textarea>
+                <button class="form-submit" type="submit">Profilimi Kaydet</button>
+            </form>
+            <p class="member-status" id="memberProfileStatus" role="status"></p>
+        </section>
+
+        <section class="member-section">
+            <h3>E-posta adresimi değiştir</h3>
+            <form id="memberEmailForm" class="member-form">
+                <label for="memberNewEmail">Yeni e-posta adresi</label>
+                <input id="memberNewEmail" type="email" maxlength="254" autocomplete="email" required>
+                <label for="memberEmailPassword">Mevcut şifren</label>
+                <input id="memberEmailPassword" type="password" autocomplete="current-password" required>
+                <button class="form-submit" type="submit">E-posta Adresini Güncelle</button>
+            </form>
+            <p class="member-status" id="memberEmailStatus" role="status"></p>
+        </section>
+
+        <section class="member-section">
+            <h3>Hesap güvenliği • Şifre değiştir</h3>
             <form id="memberPasswordForm" class="member-form">
-                <label for="memberCurrentPassword">Mevcut sifre</label>
+                <label for="memberCurrentPassword">Mevcut şifre</label>
                 <input id="memberCurrentPassword" type="password" autocomplete="current-password" required>
-                <label for="memberNewPassword">Yeni sifre</label>
+                <label for="memberNewPassword">Yeni şifre</label>
                 <input id="memberNewPassword" type="password" minlength="10" maxlength="72" autocomplete="new-password" required>
-                <label for="memberConfirmPassword">Yeni sifre (tekrar)</label>
+                <label for="memberConfirmPassword">Yeni şifre (tekrar)</label>
                 <input id="memberConfirmPassword" type="password" minlength="10" maxlength="72" autocomplete="new-password" required>
-                <p class="member-hint">En az 10 karakter; buyuk harf, kucuk harf ve rakam icermelidir.</p>
-                <button class="form-submit" type="submit">Sifremi Degistir</button>
+                <p class="member-hint">En az 10 karakter; büyük harf, küçük harf ve rakam içermelidir.</p>
+                <button class="form-submit" type="submit">Şifremi Değiştir</button>
             </form>
             <p class="member-status" id="memberPasswordStatus" role="status"></p>
+        </section>
+
+        <section class="member-section">
+            <div class="member-section-heading">
+                <h3>Analiz geçmişim</h3>
+                <div>
+                    <button class="login-btn" type="button" data-member-action="refresh">Yenile</button>
+                    <button class="member-delete-btn" type="button" data-member-action="delete-all">Tümünü Sil</button>
+                </div>
+            </div>
+            <div id="memberAnalysisHistoryList"><p class="member-hint">Analiz geçmişin yükleniyor…</p></div>
         </section>
     </section>
 </div>
