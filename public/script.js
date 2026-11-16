@@ -325,7 +325,7 @@ function openFeature(featureName) {
     };
     questionLabel.textContent = prompts[type]?.label || prompts.personal.label;
     questionInput.placeholder = prompts[type]?.placeholder || prompts.personal.placeholder;
-    questionInput.required = type !== "general";
+    questionInput.required = ["birthchart", "love", "numerology", "personal"].includes(type);
     document.getElementById("analysisForm").classList.remove("hidden");
     document.getElementById("analysisLoading").classList.add("hidden");
     document.getElementById("analysisResult").classList.add("hidden");
