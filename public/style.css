@@ -806,3 +806,249 @@ button { cursor: pointer; }
     .lunara-audio-settings .lunara-audio-toggle { grid-column:1/-1; }
     .lunara-audio-controls button { flex:1 1 auto; }
 }
+
+/* LUNARA RESPONSIVE PASS 2026-11 */
+html {
+    width: 100%;
+    overflow-x: clip;
+    scroll-padding-top: 88px;
+}
+body {
+    width: 100%;
+    min-width: 320px;
+    overflow-x: clip;
+}
+img, video, canvas, svg {
+    max-width: 100%;
+}
+button, input, select, textarea {
+    max-width: 100%;
+}
+button, .gold-btn, .login-btn, .register-btn, .member-delete-btn {
+    min-height: 42px;
+}
+.header {
+    flex-wrap: wrap;
+}
+.header > *, .header-actions, .member-actions {
+    min-width: 0;
+}
+.hero-description {
+    width: min(100%, 570px);
+}
+.feature-card {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.auth-modal, .admin-modal, .member-modal, .analysis-modal {
+    min-width: 0;
+}
+.auth-modal input, .analysis-fields input, .analysis-fields select,
+.analysis-fields textarea, .member-form input, .member-form textarea {
+    min-width: 0;
+    font-size: 16px;
+}
+.admin-table td, .admin-table th {
+    overflow-wrap: anywhere;
+}
+.admin-table-wrap {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+}
+.history-item, .member-history-item, .member-credit-item {
+    min-width: 0;
+}
+.history-item strong, .history-item small,
+.member-history-main, .member-history-main strong {
+    overflow-wrap: anywhere;
+}
+@media (max-width: 900px) {
+    .header {
+        padding: 12px 4%;
+        gap: 12px;
+    }
+    .nav {
+        gap: 16px;
+    }
+    .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .admin-modal, .member-modal {
+        width: 100%;
+    }
+}
+@media (max-width: 650px) {
+    html { scroll-padding-top: 12px; }
+    .header {
+        min-height: 0;
+        padding: 10px 4%;
+        gap: 9px;
+    }
+    .header .logo {
+        font-size: 22px;
+        letter-spacing: 3px;
+    }
+    .header .logo span { font-size: 27px; }
+    .header-actions, .member-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 6px;
+    }
+    .header-actions button, .member-actions button {
+        min-height: 38px;
+        padding: 7px 9px;
+        font-size: 10px;
+    }
+    .member-info {
+        max-width: 100px;
+        overflow-wrap: anywhere;
+        text-align: right;
+    }
+    .hero {
+        min-height: 560px;
+        padding: 72px 20px;
+    }
+    .hero h1 {
+        font-size: clamp(48px, 13vw, 68px);
+    }
+    .hero-description {
+        font-size: 13px;
+        line-height: 1.8;
+    }
+    .hero-bottom {
+        margin-top: 38px;
+        font-size: 9px;
+        letter-spacing: 1.5px;
+    }
+    .section {
+        padding: 62px 5%;
+    }
+    .section-heading {
+        margin-bottom: 32px;
+    }
+    .section-heading h2, .about h2, .membership h2 {
+        font-size: clamp(34px, 9vw, 46px);
+    }
+    .cards {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+    .feature-card {
+        min-height: 0;
+        padding: 22px 20px;
+    }
+    .feature-card h3 { font-size: 24px; }
+    .feature-card p {
+        font-size: 12px;
+        line-height: 1.7;
+    }
+    .gold-btn {
+        min-height: 46px;
+        padding: 13px 20px;
+        max-width: 100%;
+        white-space: normal;
+    }
+    .modal-overlay {
+        align-items: flex-start;
+        padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
+    }
+    .auth-modal, .admin-modal, .member-modal, .analysis-modal {
+        width: 100%;
+        max-height: calc(100dvh - 20px);
+        margin: 0 auto;
+        padding: 24px 16px;
+        border-radius: 10px;
+    }
+    .auth-modal { max-width: 450px; }
+    .admin-heading, .analysis-heading {
+        padding-right: 25px;
+        gap: 8px;
+    }
+    .admin-heading h2, .analysis-heading h2 {
+        font-size: 29px;
+        line-height: 1.15;
+    }
+    .admin-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+    .admin-stat { padding: 12px; }
+    .admin-stat strong { font-size: 21px; }
+    .admin-section { padding: 16px 0; }
+    .admin-table { min-width: 620px; }
+    .admin-analysis-detail { padding: 12px; }
+    .admin-analysis-content {
+        padding: 12px;
+        font-size: 12px;
+    }
+    .form-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .member-summary { gap: 9px; }
+    .member-summary > div { padding: 13px; }
+    .member-section { padding: 18px 0; }
+    .member-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .member-section-heading > div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+    }
+    .member-form {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 7px;
+    }
+    .member-form textarea, .member-form .member-hint,
+    .member-form button { grid-column: 1; }
+    .member-history-item {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .member-history-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .member-history-actions button { flex: 1 1 auto; }
+    .analysis-actions {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .analysis-actions .form-submit {
+        width: 100%;
+        min-height: 46px;
+    }
+    .analysis-actions > span { white-space: normal; }
+    .lunara-audio-settings {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .lunara-audio-controls button { flex: 1 1 110px; }
+    .footer { padding: 28px 5%; }
+}
+@media (max-width: 380px) {
+    .header .logo {
+        font-size: 19px;
+        letter-spacing: 2px;
+    }
+    .header .logo span { font-size: 23px; }
+    .header-actions button, .member-actions button {
+        padding: 6px 7px;
+        font-size: 9px;
+    }
+    .hero { min-height: 520px; }
+    .hero h1 { font-size: 46px; }
+    .auth-modal, .admin-modal, .member-modal, .analysis-modal {
+        padding: 20px 13px;
+    }
+    .admin-stats { grid-template-columns: 1fr 1fr; }
+    .lunara-audio-settings { grid-template-columns: 1fr; }
+    .lunara-audio-settings .lunara-audio-toggle { grid-column: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
