@@ -298,57 +298,73 @@ async function generateGeminiAnalysis(prompt, image) {
         });
     }
 
+    const modelCandidates = [...new Set([GEMINI_MODEL, "gemini-3.5-flash-lite"].filter(Boolean))];
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 90000);
 
     try {
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": GEMINI_API_KEY
-                },
-                body: JSON.stringify({
-                    systemInstruction: {
-                        parts: [{
-                            text: "Sen Lunara AI adlı Türkçe spiritüel keşif platformunun deneyimli, dikkatli ve yaratıcı yorumcususun. Daima Türkçe yanıt ver. Üslubun zarif, mistik, empatik ama ölçülü olsun. Yanıtları başlıklarla, anlaşılır ve ayrıntılı yaz. Tarot, kahve falı ve astrolojiyi sembolik/eğlence amaçlı yorumla; kesin gelecek iddiasında bulunma. Sağlık, hukuk, finans gibi önemli konularda kesin tavsiye verme. Kullanıcıyı korkutma, bağımlı kılma veya kesin sonuç vaat etme. Görselde seçilemeyen ayrıntıları uydurma; belirsizliği açıkça belirt."
-                        }]
+        for (let index = 0; index < modelCandidates.length; index++) {
+            const model = modelCandidates[index];
+            const response = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": GEMINI_API_KEY
                     },
-                    contents: [{ role: "user", parts }],
-                    generationConfig: {
-                        maxOutputTokens: 2200
-                    }
-                }),
-                signal: controller.signal
-            }
-        );
-
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok) {
-            console.error("Gemini API yanıtı:", response.status, result?.error?.message || "Bilinmeyen hata");
-            const error = new Error(
-                response.status === 429
-                    ? "Gemini kullanım sınırına ulaşıldı. Biraz sonra tekrar deneyin."
-                    : response.status === 400
-                        ? "Gemini isteği kabul etmedi. Girdi bilgilerini kontrol edin."
-                        : "AI analiz servisine şu anda ulaşılamıyor."
+                    body: JSON.stringify({
+                        systemInstruction: {
+                            parts: [{
+                                text: "Sen Lunara AI adlı Türkçe spiritüel keşif platformunun deneyimli, dikkatli ve yaratıcı yorumcususun. Daima Türkçe yanıt ver. Üslubun zarif, mistik, empatik ama ölçülü olsun. Yanıtları başlıklarla, anlaşılır ve ayrıntılı yaz. Tarot, kahve falı ve astrolojiyi sembolik/eğlence amaçlı yorumla; kesin gelecek iddiasında bulunma. Sağlık, hukuk, finans gibi önemli konularda kesin tavsiye verme. Kullanıcıyı korkutma, bağımlı kılma veya kesin sonuç vaat etme. Görselde seçilemeyen ayrıntıları uydurma; belirsizliği açıkça belirt."
+                            }]
+                        },
+                        contents: [{ role: "user", parts }],
+                        generationConfig: {
+                            maxOutputTokens: 2200
+                        }
+                    }),
+                    signal: controller.signal
+                }
             );
-            error.status = response.status === 429 ? 429 : 502;
-            throw error;
+
+            const result = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                console.error("Gemini API yanıtı (" + model + "):", response.status, result?.error?.message || "Bilinmeyen hata");
+
+                if (response.status === 503 && index < modelCandidates.length - 1) {
+                    console.warn("Ana Gemini modeli yoğun; yedek model deneniyor.");
+                    continue;
+                }
+
+                const error = new Error(
+                    response.status === 429
+                        ? "Gemini kullanım sınırına ulaşıldı. Biraz sonra tekrar deneyin."
+                        : response.status === 400
+                            ? "Gemini isteği kabul etmedi. Girdi bilgilerini kontrol edin."
+                            : response.status === 503
+                                ? "AI servisi şu anda yoğun. Birkaç dakika sonra tekrar deneyin."
+                                : "AI analiz servisine şu anda ulaşılamıyor."
+                );
+                error.status = response.status === 429 ? 429 : response.status === 503 ? 503 : 502;
+                throw error;
+            }
+
+            const text = result?.candidates?.[0]?.content?.parts
+                ?.map(part => part.text || "")
+                .join("\\n")
+                .trim();
+
+            if (!text) {
+                throw new Error("AI bu analiz için yanıt oluşturamadı. Lütfen tekrar deneyin.");
+            }
+
+            return text;
         }
 
-        const text = result?.candidates?.[0]?.content?.parts
-            ?.map(part => part.text || "")
-            .join("\\n")
-            .trim();
-
-        if (!text) {
-            throw new Error("AI bu analiz için yanıt oluşturamadı. Lütfen tekrar deneyin.");
-        }
-
-        return text;
+        const unavailable = new Error("AI analiz servisi şu anda yanıt veremiyor. Lütfen tekrar deneyin.");
+        unavailable.status = 503;
+        throw unavailable;
     } catch (error) {
         if (error.name === "AbortError") {
             const timeoutError = new Error("Analiz zaman aşımına uğradı. Lütfen tekrar deneyin.");
