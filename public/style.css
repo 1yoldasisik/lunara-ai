@@ -738,3 +738,35 @@ button { cursor: pointer; }
     .member-history-item { align-items: flex-start; flex-direction: column; }
     .member-credit-item { align-items: flex-start; }
 }
+
+
+/* Yönetici analiz okuma alanı */
+.admin-analysis-detail {
+    margin-top: 20px;
+    padding: 18px;
+    border: 1px solid rgba(217,182,111,.28);
+    border-radius: 8px;
+    background: rgba(255,255,255,.025);
+}
+.admin-analysis-detail-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+}
+.admin-analysis-detail-heading h3 { color: var(--gold); margin: 0 0 6px; }
+.admin-analysis-content {
+    margin: 14px 0 0;
+    padding: 16px;
+    max-height: 55vh;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.8;
+}
+@media(max-width:650px) {
+    .admin-analysis-detail-heading { flex-direction: column; }
+}
