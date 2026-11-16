@@ -308,6 +308,7 @@ function openFeature(featureName) {
     document.getElementById("analysisForm").classList.remove("hidden");
     document.getElementById("analysisLoading").classList.add("hidden");
     document.getElementById("analysisResult").classList.add("hidden");
+    document.getElementById("lunaraAudioPlayer").classList.add("hidden");
     analysisModal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
     loadAnalysisHistory();
@@ -358,6 +359,7 @@ function showAnalysisResult(analysis) {
     document.getElementById("analysisForm").classList.add("hidden");
     document.getElementById("analysisLoading").classList.add("hidden");
     document.getElementById("analysisResult").classList.remove("hidden");
+    document.getElementById("lunaraAudioPlayer").classList.remove("hidden");
     document.getElementById("analysisResultTitle").textContent = analysis.title;
     document.getElementById("analysisResultContent").textContent = analysis.content;
     document.getElementById("lunaraAudioStatus").textContent = "Analizini mistik atmosferde dinle";
