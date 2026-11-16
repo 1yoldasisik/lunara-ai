@@ -279,6 +279,10 @@ const ANALYSIS_TYPES = Object.freeze({
     tarot: { title: "Tarot Falı", cost: 5 },
     coffee: { title: "Kahve Falı", cost: 8 },
     horoscope: { title: "Burç Yorumu", cost: 2 },
+    birthchart: { title: "Doğum Haritası Yorumu", cost: 10 },
+    love: { title: "Aşk Falı", cost: 6 },
+    numerology: { title: "Numeroloji Analizi", cost: 7 },
+    general: { title: "Genel Fal", cost: 6 },
     personal: { title: "Kişisel Analiz", cost: 5 }
 });
 
@@ -1020,6 +1024,14 @@ app.post("/api/analyses", requireSameOrigin, requireLogin, analysisLimiter, asyn
                 return res.status(400).json({ success: false, message: "Lütfen geçerli bir burç seçin." });
             }
             prompt = `${sign} burcu için ${periodName} astrolojik sembolizm yorumu yaz. Aşk/ilişkiler, iş/üretkenlik, kişisel denge ve günün/haftanın/ayın önerisi başlıklarını kullan. Gerçek zamanlı gezegen konumlarına erişimin olmadığını varsay; belirli transit veya olay uydurma. Yorumu genel ve sembolik tut. Kullanıcının sorusu/notu: ${question || "Genel yorum"}`;
+        } else if (type === "birthchart") {
+            prompt = `Kullanıcının verdiği doğum bilgileri üzerinden temel doğum haritası temalarını sembolik astroloji çerçevesinde yorumla. Güneş, Ay ve yükselen burç bilgileri verilmişse bunları açıkla; doğum saati veya yeri eksikse evler, yükselen ya da gezegen yerleşimleri uydurma. Kişilik eğilimleri, duygusal ihtiyaçlar, ilişkiler, yetenekler ve gelişim alanları başlıklarını kullan. Kesinlik iddiasında bulunma. Kullanıcının doğum bilgileri ve sorusu: ${question || "Doğum haritamın genel temalarını öğrenmek istiyorum."}`;
+        } else if (type === "love") {
+            prompt = `Kullanıcı için aşk ve ilişkiler odaklı, sembolik ve dengeli bir ilişki yorumu hazırla. Duygusal ihtiyaçlar, iletişim, karşılıklı beklentiler, mevcut ilişkinin dinamikleri veya yeni ilişkilere açık olma temalarını ele al. Belirli bir kişinin düşüncelerini ya da gelecekte kesin yaşanacak olayları biliyormuş gibi davranma. Kullanıcının sorusu ve paylaştığı durum: ${question || "Aşk hayatıma dair genel bir yorum istiyorum."}`;
+        } else if (type === "numerology") {
+            prompt = `Kullanıcının paylaştığı isim ve doğum tarihi bilgileri varsa numerolojideki yaygın sembolik yaklaşımlarla yorumla. Hesaplama için gerekli bilgiler eksikse bunu açıkça belirt ve sayı uydurma. İsim, yaşam yolu sayısı (hesaplanabiliyorsa), güçlü temalar, kişisel eğilimler ve üzerinde düşünülebilecek noktalar başlıklarını kullan. Numerolojiyi bilimsel bir kişilik ölçümü veya kesin gelecek tahmini olarak sunma. Kullanıcının bilgileri ve sorusu: ${question || "Numerolojik temalarımı öğrenmek istiyorum."}`;
+        } else if (type === "general") {
+            prompt = `Kullanıcı için genel fal niteliğinde, sembolik ve eğlence amaçlı kapsamlı bir yorum hazırla. Genel enerji, ilişkiler, iş ve hedefler, yakın dönem fırsatları ve dikkat edilebilecek konular başlıklarını kullan. Kesin gelecek iddiasında bulunma; belirsizliği koru ve korkutucu ifadelerden kaçın. Kullanıcının sorusu veya eklediği not: ${question || "Hayatımın genel akışına dair bir yorum istiyorum."}`;
         } else {
             const focus = String(details.focus || "Genel yaşam").slice(0, 80);
             prompt = `Kullanıcı için ${focus} odağında kapsamlı bir kişisel farkındalık analizi yaz. Güçlü yönler, zorlanma alanları, ilişkiler/iletişim, hedefler ve uygulanabilir küçük adımlar başlıklarını kullan. Kullanıcıyı tanımadığın özellikleri kesin gerçek gibi sunma; yorumlarını kullanıcının verdiği bilgilerle sınırla. Kullanıcının paylaştığı bilgi ve sorusu: ${question || "Kendimi daha iyi tanımak istiyorum."}`;
