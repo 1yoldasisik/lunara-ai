@@ -770,3 +770,39 @@ button { cursor: pointer; }
 @media(max-width:650px) {
     .admin-analysis-detail-heading { flex-direction: column; }
 }
+
+
+/* Lunara mistik sesli analiz oynatıcısı */
+.lunara-audio-player {
+    margin: 18px 0;
+    padding: 18px;
+    border: 1px solid rgba(217,182,111,.28);
+    border-radius: 10px;
+    background:
+      radial-gradient(ellipse at 10% 0%, rgba(125,79,165,.22), transparent 55%),
+      linear-gradient(145deg, rgba(35,21,51,.95), rgba(15,9,25,.95));
+}
+.lunara-audio-heading { display:flex; align-items:center; gap:12px; margin-bottom:15px; }
+.lunara-audio-symbol {
+    display:grid; place-items:center; width:42px; height:42px; flex:0 0 42px;
+    border:1px solid rgba(217,182,111,.4); border-radius:50%;
+    color:var(--gold); font-size:25px; box-shadow:0 0 22px rgba(217,182,111,.12);
+}
+.lunara-audio-heading strong { display:block; color:var(--gold); letter-spacing:2px; font-size:12px; }
+.lunara-audio-heading small { display:block; color:var(--muted); font-size:11px; margin-top:4px; }
+.lunara-audio-controls { display:flex; flex-wrap:wrap; gap:8px; }
+.lunara-audio-controls button { margin:0; }
+.lunara-audio-controls button:disabled { opacity:.45; cursor:not-allowed; }
+.lunara-audio-settings {
+    display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;
+    margin-top:15px; padding-top:13px; border-top:1px solid rgba(217,182,111,.14);
+}
+.lunara-audio-settings label { display:flex; flex-direction:column; gap:6px; color:var(--muted); font-size:11px; }
+.lunara-audio-settings .lunara-audio-toggle { flex-direction:row; align-items:center; }
+.lunara-audio-settings input[type="range"] { width:100%; accent-color:var(--gold); }
+.lunara-audio-settings input[type="checkbox"] { accent-color:var(--gold); }
+@media(max-width:600px) {
+    .lunara-audio-settings { grid-template-columns:1fr 1fr; }
+    .lunara-audio-settings .lunara-audio-toggle { grid-column:1/-1; }
+    .lunara-audio-controls button { flex:1 1 auto; }
+}
