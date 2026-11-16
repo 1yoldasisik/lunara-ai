@@ -44,6 +44,17 @@ async function apiRequest(url, options = {}) {
     return data;
 }
 
+function updateCreditDisplay(credits) {
+    const balance = Number(credits);
+    if (!Number.isSafeInteger(balance) || balance < 0) return;
+
+    const memberBalance = document.getElementById("memberCreditBalance");
+    if (memberBalance) memberBalance.textContent = balance + " kredi";
+
+    const headerBalance = document.getElementById("headerCreditBalance");
+    if (headerBalance) headerBalance.textContent = balance + " kredi";
+}
+
 function updateMemberUI(user) {
     const guestActions = document.getElementById("guestActions");
     const memberActions = document.getElementById("memberActions");
@@ -64,6 +75,7 @@ function updateMemberUI(user) {
 
     document.getElementById("headerUserName").textContent =
         `${user.firstName} ${user.lastName}`;
+    if (user.credits !== undefined) updateCreditDisplay(user.credits);
 
 
     if (adminOpenButton) {
@@ -260,6 +272,12 @@ function openFeature(featureName) {
     else if (normalized.includes("kahve")) type = "coffee";
     else if (normalized.includes("burç")) type = "horoscope";
 
+    const prices = { tarot: 5, coffee: 8, horoscope: 2, personal: 5 };
+    const creditHint = document.getElementById("analysisCreditHint");
+    if (creditHint) {
+        creditHint.textContent = `Bu analiz ${prices[type]} kredi kullanır. Başarılı analiz tamamlandığında bakiyenizden düşülür.`;
+    }
+
     const titles = {
         tarot: "Tarot Falı",
         coffee: "Kahve Falı",
@@ -376,6 +394,7 @@ document.getElementById("analysisForm").addEventListener("submit", async event =
             body: JSON.stringify({ type, question, details, imageData })
         });
         showAnalysisResult(data.analysis);
+        if (data.creditsRemaining !== undefined) updateCreditDisplay(data.creditsRemaining);
         await loadAnalysisHistory();
         showMessage(data.message);
     } catch (error) {
@@ -535,12 +554,13 @@ async function loadAdminPanel() {
                     <td>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
                     <td>${escapeHtml(user.email)}</td>
                     <td>${escapeHtml(user.role)}</td>
+                    <td>${Number(user.credits) || 0}</td>
                     <td>${escapeHtml(user.createdAt)}</td>
                 </tr>
-            `).join("") || '<tr><td colspan="5">Henüz üye yok.</td></tr>';
+            `).join("") || '<tr><td colspan="6">Henüz üye yok.</td></tr>';
         }
     } else {
-        if (usersBody) usersBody.innerHTML = '<tr><td colspan="5">' +
+        if (usersBody) usersBody.innerHTML = '<tr><td colspan="6">' +
             escapeHtml(usersResult.reason.message || "Üye listesi yüklenemedi.") + '</td></tr>';
         errors.push("Üye listesi: " + usersResult.reason.message);
     }
@@ -664,6 +684,28 @@ async function refreshMemberPanel() {
         ]);
 
         const user = profileData.user;
+        updateCreditDisplay(user.credits);
+
+        const creditHistoryBox = document.getElementById("memberCreditHistoryList");
+        const creditTransactions = profileData.creditTransactions || [];
+        if (creditHistoryBox) {
+            creditHistoryBox.innerHTML = creditTransactions.length
+                ? creditTransactions.map(item => {
+                    const amount = Number(item.amount) || 0;
+                    const positive = amount > 0;
+                    const amountText = (positive ? "+" : "") + amount + " kredi";
+                    return `
+                        <div class="member-credit-item">
+                            <div>
+                                <strong>${memberEscapeHTML(item.description || "Kredi hareketi")}</strong>
+                                <span>${memberEscapeHTML(memberDate(item.createdAt))}</span>
+                            </div>
+                            <strong class="${positive ? "credit-positive" : "credit-negative"}">${amountText}</strong>
+                        </div>
+                    `;
+                }).join("")
+                : '<p class="member-hint">Henüz kredi hareketi bulunmuyor.</p>';
+        }
 
         document.getElementById("memberFirstName").value = user.firstName || "";
         document.getElementById("memberLastName").value = user.lastName || "";
