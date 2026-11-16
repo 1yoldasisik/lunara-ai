@@ -243,6 +243,17 @@ async function logout() {
 
 const analysisModal = document.getElementById("analysisModal");
 
+const titles = {
+    tarot: "Tarot Falı",
+    coffee: "Kahve Falı",
+    horoscope: "Burçlar",
+    birthchart: "Doğum Haritası",
+    love: "Aşk Falı",
+    numerology: "Numeroloji",
+    general: "Genel Fal",
+    personal: "Kişisel Analiz"
+};
+
 function openFeature(featureName) {
     const memberVisible = !document
         .getElementById("memberActions")
