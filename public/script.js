@@ -25,12 +25,16 @@ async function apiRequest(url, options = {}) {
         }
     });
 
+    const responseText = await response.text();
     let data;
 
     try {
-        data = await response.json();
+        data = responseText ? JSON.parse(responseText) : {};
     } catch {
-        throw new Error("Sunucudan geçersiz yanıt alındı.");
+        if (!response.ok && [502, 503, 504].includes(response.status)) {
+            throw new Error("AI analiz servisi geçici olarak yanıt veremiyor. Lütfen birkaç dakika sonra tekrar deneyin.");
+        }
+        throw new Error("Sunucudan geçersiz yanıt alındı (HTTP " + response.status + ").");
     }
 
     if (!response.ok) {
