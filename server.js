@@ -1036,7 +1036,7 @@ app.get("/api/admin/users", requireAdmin, (req, res) => {
 
 app.get("/api/admin/analyses", requireAdmin, (req, res) => {
     const rows = db.prepare(`
-        SELECT a.id, a.user_id, a.analysis_type, a.title,
+        SELECT a.id, a.user_id, a.analysis_type, a.title, a.content,
                a.created_at,
                u.first_name, u.last_name, u.email
         FROM analyses a
