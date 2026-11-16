@@ -582,6 +582,10 @@ function showAdminAnalysis(id) {
         (item.first_name || "") + " " + (item.last_name || "") +
         " • " + (item.email || "") + " • " + (item.analysis_type || "Analiz") +
         " • " + (item.created_at || "");
+    const questionBox = document.getElementById("adminAnalysisDetailQuestion");
+    if (questionBox) {
+        questionBox.textContent = item.question || "Bu analiz oluşturulurken kullanıcı tarafından ayrı bir soru/not kaydedilmemiş.";
+    }
     document.getElementById("adminAnalysisDetailContent").textContent =
         item.content || "Bu analiz kaydında içerik bulunmuyor.";
     document.getElementById("adminAnalysisDetail").classList.remove("hidden");
