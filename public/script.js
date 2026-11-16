@@ -345,6 +345,7 @@ function openFeature(featureName) {
 }
 
 function closeAnalysisModal() {
+    stopLunaraAudio();
     analysisModal.classList.add("hidden");
     document.body.style.overflow = "";
 }
@@ -384,12 +385,157 @@ async function loadAnalysisHistory() {
 }
 
 function showAnalysisResult(analysis) {
+    stopLunaraAudio();
     document.getElementById("analysisForm").classList.add("hidden");
     document.getElementById("analysisLoading").classList.add("hidden");
     document.getElementById("analysisResult").classList.remove("hidden");
     document.getElementById("analysisResultTitle").textContent = analysis.title;
     document.getElementById("analysisResultContent").textContent = analysis.content;
+    document.getElementById("lunaraAudioStatus").textContent = "Analizini mistik atmosferde dinle";
+    document.getElementById("analysisSpeakButton").disabled = !("speechSynthesis" in window);
+    document.getElementById("analysisPauseButton").disabled = true;
+    document.getElementById("analysisStopButton").disabled = true;
 }
+
+let lunaraUtterance = null;
+let lunaraSpeechActive = false;
+let lunaraAudioContext = null;
+let lunaraAmbientMaster = null;
+let lunaraAmbientNodes = [];
+
+function startLunaraAmbient() {
+    if (!document.getElementById("analysisMusicToggle").checked) return;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+        document.getElementById("lunaraAudioStatus").textContent = "Tarayıcı arka plan müziğini desteklemiyor.";
+        return;
+    }
+    if (!lunaraAudioContext) {
+        lunaraAudioContext = new AudioContextClass();
+        lunaraAmbientMaster = lunaraAudioContext.createGain();
+        lunaraAmbientMaster.gain.value = 0;
+        lunaraAmbientMaster.connect(lunaraAudioContext.destination);
+
+        // Telifsiz, tarayıcı içinde üretilen yumuşak kozmik ambient katmanları.
+        [110, 164.81, 220].forEach((frequency, index) => {
+            const oscillator = lunaraAudioContext.createOscillator();
+            const layerGain = lunaraAudioContext.createGain();
+            const filter = lunaraAudioContext.createBiquadFilter();
+            oscillator.type = "sine";
+            oscillator.frequency.value = frequency;
+            oscillator.detune.value = index === 1 ? -5 : index === 2 ? 4 : 0;
+            filter.type = "lowpass";
+            filter.frequency.value = 520;
+            layerGain.gain.value = index === 0 ? 0.42 : index === 1 ? 0.25 : 0.12;
+            oscillator.connect(filter);
+            filter.connect(layerGain);
+            layerGain.connect(lunaraAmbientMaster);
+            oscillator.start();
+            lunaraAmbientNodes.push(oscillator);
+        });
+    }
+    lunaraAudioContext.resume();
+    const volume = Number(document.getElementById("analysisMusicVolume").value);
+    lunaraAmbientMaster.gain.setTargetAtTime(volume, lunaraAudioContext.currentTime, 1.8);
+}
+
+function stopLunaraAmbient() {
+    if (!lunaraAudioContext || !lunaraAmbientMaster) return;
+    lunaraAmbientMaster.gain.setTargetAtTime(0, lunaraAudioContext.currentTime, 0.35);
+}
+
+function stopLunaraAudio() {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    lunaraUtterance = null;
+    lunaraSpeechActive = false;
+    stopLunaraAmbient();
+    const pauseButton = document.getElementById("analysisPauseButton");
+    const stopButton = document.getElementById("analysisStopButton");
+    const status = document.getElementById("lunaraAudioStatus");
+    if (pauseButton) {
+        pauseButton.disabled = true;
+        pauseButton.textContent = "Duraklat";
+    }
+    if (stopButton) stopButton.disabled = true;
+    if (status) status.textContent = "Sesli okuma durduruldu.";
+}
+
+function playLunaraAnalysis() {
+    if (!("speechSynthesis" in window)) {
+        showMessage("Tarayıcınız Türkçe sesli okumayı desteklemiyor.");
+        return;
+    }
+    const text = document.getElementById("analysisResultContent").textContent.trim();
+    if (!text) return;
+    if (window.speechSynthesis.paused && lunaraUtterance) {
+        window.speechSynthesis.resume();
+        startLunaraAmbient();
+        document.getElementById("lunaraAudioStatus").textContent = "Sesli analiz devam ediyor…";
+        document.getElementById("analysisPauseButton").textContent = "Duraklat";
+        return;
+    }
+
+    window.speechSynthesis.cancel();
+    lunaraUtterance = new SpeechSynthesisUtterance(text);
+    lunaraUtterance.lang = "tr-TR";
+    lunaraUtterance.rate = 0.94;
+    lunaraUtterance.pitch = 1;
+    lunaraUtterance.volume = Number(document.getElementById("analysisSpeechVolume").value);
+    const voices = window.speechSynthesis.getVoices();
+    const turkishVoice = voices.find(voice => voice.lang && voice.lang.toLowerCase().startsWith("tr"));
+    if (turkishVoice) lunaraUtterance.voice = turkishVoice;
+    lunaraUtterance.onstart = () => {
+        lunaraSpeechActive = true;
+        document.getElementById("lunaraAudioStatus").textContent = "Analizin seslendiriliyor…";
+        document.getElementById("analysisPauseButton").disabled = false;
+        document.getElementById("analysisStopButton").disabled = false;
+        document.getElementById("analysisPauseButton").textContent = "Duraklat";
+    };
+    lunaraUtterance.onend = () => {
+        lunaraSpeechActive = false;
+        stopLunaraAmbient();
+        document.getElementById("lunaraAudioStatus").textContent = "Sesli analiz tamamlandı.";
+        document.getElementById("analysisPauseButton").disabled = true;
+        document.getElementById("analysisStopButton").disabled = true;
+    };
+    lunaraUtterance.onerror = event => {
+        if (event.error === "canceled" || event.error === "interrupted") return;
+        lunaraSpeechActive = false;
+        stopLunaraAmbient();
+        document.getElementById("lunaraAudioStatus").textContent = "Seslendirme başlatılamadı.";
+    };
+    startLunaraAmbient();
+    window.speechSynthesis.speak(lunaraUtterance);
+}
+
+document.getElementById("analysisSpeakButton").addEventListener("click", playLunaraAnalysis);
+document.getElementById("analysisPauseButton").addEventListener("click", () => {
+    if (!lunaraSpeechActive) return;
+    if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+        startLunaraAmbient();
+        document.getElementById("analysisPauseButton").textContent = "Duraklat";
+        document.getElementById("lunaraAudioStatus").textContent = "Sesli analiz devam ediyor…";
+    } else {
+        window.speechSynthesis.pause();
+        stopLunaraAmbient();
+        document.getElementById("analysisPauseButton").textContent = "Devam Et";
+        document.getElementById("lunaraAudioStatus").textContent = "Sesli analiz duraklatıldı.";
+    }
+});
+document.getElementById("analysisStopButton").addEventListener("click", stopLunaraAudio);
+document.getElementById("analysisMusicToggle").addEventListener("change", event => {
+    if (event.target.checked && lunaraSpeechActive) startLunaraAmbient();
+    else stopLunaraAmbient();
+});
+document.getElementById("analysisSpeechVolume").addEventListener("input", event => {
+    if (lunaraUtterance) lunaraUtterance.volume = Number(event.target.value);
+});
+document.getElementById("analysisMusicVolume").addEventListener("input", event => {
+    if (lunaraAmbientMaster && lunaraSpeechActive && document.getElementById("analysisMusicToggle").checked) {
+        lunaraAmbientMaster.gain.setTargetAtTime(Number(event.target.value), lunaraAudioContext.currentTime, 0.2);
+    }
+});
 
 document.getElementById("analysisForm").addEventListener("submit", async event => {
     event.preventDefault();
@@ -989,6 +1135,7 @@ document.addEventListener("click", (event) => {
             break;
 
         case "analysis-new":
+            stopLunaraAudio();
             document.getElementById("analysisResult").classList.add("hidden");
             document.getElementById("analysisForm").classList.remove("hidden");
             break;
