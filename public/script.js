@@ -177,7 +177,7 @@ document.getElementById("registerForm").addEventListener("submit", async (event)
         document.getElementById("registerForm").reset();
         closeAuth();
 
-        showMessage("Üyeliğin oluşturuldu!");
+        showMessage(`Üyeliğin oluşturuldu! Hesabına ${data.user.credits} kredi eklendi.`);
     } catch (error) {
         showMessage(error.message);
     }
@@ -524,7 +524,7 @@ async function loadAdminPanel() {
     const statAnalyses = document.getElementById("statAnalyses");
 
     if (message) message.textContent = "Yönetici verileri yükleniyor…";
-    if (usersBody) usersBody.innerHTML = '<tr><td colspan="5">Yükleniyor…</td></tr>';
+    if (usersBody) usersBody.innerHTML = '<tr><td colspan="6">Yükleniyor…</td></tr>';
     if (analysesBody) analysesBody.innerHTML = '<tr><td colspan="6">Yükleniyor…</td></tr>';
 
     const [statsResult, usersResult, analysesResult] = await Promise.allSettled([
