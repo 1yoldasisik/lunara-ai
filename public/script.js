@@ -493,23 +493,36 @@ function escapeHtml(value) {
 
 async function loadAdminPanel() {
     const message = document.getElementById("adminMessage");
-    message.textContent = "Yönetici verileri yükleniyor…";
+    const usersBody = document.getElementById("adminUsersBody");
+    const statUsers = document.getElementById("statUsers");
+    const statAnalyses = document.getElementById("statAnalyses");
 
-    try {
-        const [statsData, usersData, analysesData] = await Promise.all([
-            apiRequest("/api/admin/stats", { method: "GET", headers: {} }),
-            apiRequest("/api/admin/users", { method: "GET", headers: {} }),
-            apiRequest("/api/admin/analyses", { method: "GET", headers: {} })
-        ]);
+    if (message) message.textContent = "Yönetici verileri yükleniyor…";
+    if (usersBody) usersBody.innerHTML = '<tr><td colspan="5">Yükleniyor…</td></tr>';
 
-        document.getElementById("statUsers").textContent =
-            statsData.stats.totalUsers;
+    // İstatistik ve üye listesi birbirinden bağımsız yüklenir.
+    // Böylece bir istekteki hata diğer verilerin görüntülenmesini engellemez.
+    const [statsResult, usersResult] = await Promise.allSettled([
+        apiRequest("/api/admin/stats", { method: "GET", headers: {} }),
+        apiRequest("/api/admin/users", { method: "GET", headers: {} })
+    ]);
 
-        document.getElementById("statAnalyses").textContent =
-            statsData.stats.totalAnalyses;
+    let errors = [];
 
-        document.getElementById("adminUsersBody").innerHTML =
-            usersData.users.map(user => `
+    if (statsResult.status === "fulfilled") {
+        const stats = statsResult.value.stats || {};
+        if (statUsers) statUsers.textContent = stats.totalUsers ?? 0;
+        if (statAnalyses) statAnalyses.textContent = stats.totalAnalyses ?? 0;
+    } else {
+        if (statUsers) statUsers.textContent = "—";
+        if (statAnalyses) statAnalyses.textContent = "—";
+        errors.push("İstatistikler: " + statsResult.reason.message);
+    }
+
+    if (usersResult.status === "fulfilled") {
+        const users = usersResult.value.users || [];
+        if (usersBody) {
+            usersBody.innerHTML = users.map(user => `
                 <tr>
                     <td>${user.id}</td>
                     <td>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
@@ -517,26 +530,25 @@ async function loadAdminPanel() {
                     <td>${escapeHtml(user.role)}</td>
                     <td>${escapeHtml(user.createdAt)}</td>
                 </tr>
-            `).join("") ||
-            '<tr><td colspan="5">Henüz üye yok.</td></tr>';
-
-        document.getElementById("adminAnalysesBody").innerHTML =
-            analysesData.analyses.map(item => `
-                <tr>
-                    <td>${escapeHtml(item.first_name)} ${escapeHtml(item.last_name)}<br>${escapeHtml(item.email)}</td>
-                    <td>${escapeHtml(item.analysis_type)}</td>
-                    <td>${escapeHtml(item.title)}</td>
-                    <td>${escapeHtml(item.created_at)}</td>
-                </tr>
-            `).join("") ||
-            '<tr><td colspan="4">Henüz kayıtlı analiz yok.</td></tr>';
-
-        message.textContent = "Veriler güncellendi.";
-    } catch (error) {
-        message.textContent = error.message;
-        if (/yetki|yönetici|giriş/i.test(error.message)) {
-            adminModal.classList.add("hidden");
+            `).join("") || '<tr><td colspan="5">Henüz üye yok.</td></tr>';
         }
+    } else {
+        if (usersBody) {
+            usersBody.innerHTML = '<tr><td colspan="5">' +
+                escapeHtml(usersResult.reason.message || "Üye listesi yüklenemedi.") +
+                '</td></tr>';
+        }
+        errors.push("Üye listesi: " + usersResult.reason.message);
+    }
+
+    if (message) {
+        message.textContent = errors.length
+            ? errors.join(" • ")
+            : "Veriler güncellendi.";
+    }
+
+    if (errors.some(error => /yetki|yönetici|giriş/i.test(error))) {
+        adminModal.classList.add("hidden");
     }
 }
 
