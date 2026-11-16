@@ -44,6 +44,17 @@ async function apiRequest(url, options = {}) {
     return data;
 }
 
+function updateCreditDisplay(credits) {
+    const balance = Number(credits);
+    if (!Number.isSafeInteger(balance) || balance < 0) return;
+
+    const memberBalance = document.getElementById("memberCreditBalance");
+    if (memberBalance) memberBalance.textContent = balance + " kredi";
+
+    const headerBalance = document.getElementById("headerCreditBalance");
+    if (headerBalance) headerBalance.textContent = balance + " kredi";
+}
+
 function updateMemberUI(user) {
     const guestActions = document.getElementById("guestActions");
     const memberActions = document.getElementById("memberActions");
@@ -64,6 +75,7 @@ function updateMemberUI(user) {
 
     document.getElementById("headerUserName").textContent =
         `${user.firstName} ${user.lastName}`;
+    if (user.credits !== undefined) updateCreditDisplay(user.credits);
 
 
     if (adminOpenButton) {
@@ -165,7 +177,7 @@ document.getElementById("registerForm").addEventListener("submit", async (event)
         document.getElementById("registerForm").reset();
         closeAuth();
 
-        showMessage("Üyeliğin oluşturuldu!");
+        showMessage(`Üyeliğin oluşturuldu! Hesabına ${data.user.credits} kredi eklendi.`);
     } catch (error) {
         showMessage(error.message);
     }
@@ -255,30 +267,75 @@ function openFeature(featureName) {
     }
 
     const normalized = String(featureName).toLocaleLowerCase("tr-TR");
-    let type = "personal";
-    if (normalized.includes("tarot")) type = "tarot";
-    else if (normalized.includes("kahve")) type = "coffee";
-    else if (normalized.includes("burç")) type = "horoscope";
-
+    const featureTypes = {
+        "tarot falı": "tarot",
+        "kahve falı": "coffee",
+        "burçlar": "horoscope",
+        "doğum haritası": "birthchart",
+        "aşk falı": "love",
+        "numeroloji": "numerology",
+        "genel fal": "general",
+        "kişisel analiz": "personal"
+    };
+    const type = featureTypes[normalized] || "personal";
+    const prices = {
+        tarot: 5, coffee: 8, horoscope: 2, birthchart: 10,
+        love: 6, numerology: 7, general: 6, personal: 5
+    };
     const titles = {
         tarot: "Tarot Falı",
         coffee: "Kahve Falı",
         horoscope: "Burç Yorumu",
-        personal: featureName === "Doğum Haritası" ? "Doğum Haritası Yorumu" :
-            featureName === "Aşk Falı" ? "Aşk ve İlişki Analizi" :
-            featureName === "Numeroloji" ? "Numeroloji Analizi" :
-            featureName === "Genel Fal" ? "Genel Yaşam Yorumu" : "Kişisel Analiz"
+        birthchart: "Doğum Haritası Yorumu",
+        love: "Aşk Falı",
+        numerology: "Numeroloji Analizi",
+        general: "Genel Fal",
+        personal: "Kişisel Analiz"
     };
+    const creditHint = document.getElementById("analysisCreditHint");
+    if (creditHint) {
+        creditHint.textContent = `Bu analiz ${prices[type]} kredi kullanır. Başarılı analiz tamamlandığında bakiyenizden düşülür.`;
+    }
 
     document.getElementById("analysisForm").reset();
     document.getElementById("analysisType").value = type;
-    document.getElementById("analysisTitle").textContent = titles[type] || titles.personal;
-    if (type === "personal") document.getElementById("analysisTitle").textContent = titles.personal;
+    document.getElementById("analysisTitle").textContent = titles[type];
     document.getElementById("analysisDescription").textContent =
         "Gemini yapay zekâsı ile hazırlanan sana özel sembolik yorum.";
+    const personalTypes = ["birthchart", "love", "numerology", "general", "personal"];
     ["tarot", "coffee", "horoscope", "personal"].forEach(name => {
-        document.getElementById(name + "Fields").classList.toggle("hidden", name !== type);
+        document.getElementById(name + "Fields").classList.toggle(
+            "hidden",
+            name === "personal" ? !personalTypes.includes(type) : name !== type
+        );
     });
+    const questionLabel = document.querySelector('label[for="personalQuestion"]');
+    const questionInput = document.getElementById("personalQuestion");
+    const prompts = {
+        birthchart: {
+            label: "Doğum tarihi, saati ve doğum yeri",
+            placeholder: "Doğum tarihini, mümkünse kesin doğum saatini ve doğduğun şehir/ülkeyi yaz. Saat bilinmiyorsa belirt."
+        },
+        love: {
+            label: "Aşk hayatın ve merak ettiğin konu",
+            placeholder: "İlişki durumunu ve aşk hayatında merak ettiğin konuyu anlat..."
+        },
+        numerology: {
+            label: "Ad-soyad ve doğum tarihi",
+            placeholder: "Numeroloji yorumu için kullanmak istediğin ad-soyadını ve doğum tarihini yaz..."
+        },
+        general: {
+            label: "Yorumlanmasını istediğin konu (isteğe bağlı)",
+            placeholder: "Aşk, iş, aile veya genel yaşam hakkında merak ettiğin konuyu yaz..."
+        },
+        personal: {
+            label: "Kendin hakkında paylaşmak istediklerin",
+            placeholder: "Sorunu, hedefini veya üzerinde düşündüğün konuyu anlat..."
+        }
+    };
+    questionLabel.textContent = prompts[type]?.label || prompts.personal.label;
+    questionInput.placeholder = prompts[type]?.placeholder || prompts.personal.placeholder;
+    questionInput.required = type !== "general";
     document.getElementById("analysisForm").classList.remove("hidden");
     document.getElementById("analysisLoading").classList.add("hidden");
     document.getElementById("analysisResult").classList.add("hidden");
@@ -363,7 +420,9 @@ document.getElementById("analysisForm").addEventListener("submit", async event =
     } else {
         details.focus = document.getElementById("personalFocus").value;
         question = document.getElementById("personalQuestion").value.trim();
-        if (!question) return showMessage("Lütfen analiz için kendin hakkında birkaç bilgi yaz.");
+        if (type !== "general" && !question) {
+            return showMessage("Lütfen bu analiz için gerekli bilgileri gir.");
+        }
     }
 
     submit.disabled = true;
@@ -376,6 +435,7 @@ document.getElementById("analysisForm").addEventListener("submit", async event =
             body: JSON.stringify({ type, question, details, imageData })
         });
         showAnalysisResult(data.analysis);
+        if (data.creditsRemaining !== undefined) updateCreditDisplay(data.creditsRemaining);
         await loadAnalysisHistory();
         showMessage(data.message);
     } catch (error) {
@@ -505,7 +565,7 @@ async function loadAdminPanel() {
     const statAnalyses = document.getElementById("statAnalyses");
 
     if (message) message.textContent = "Yönetici verileri yükleniyor…";
-    if (usersBody) usersBody.innerHTML = '<tr><td colspan="5">Yükleniyor…</td></tr>';
+    if (usersBody) usersBody.innerHTML = '<tr><td colspan="6">Yükleniyor…</td></tr>';
     if (analysesBody) analysesBody.innerHTML = '<tr><td colspan="6">Yükleniyor…</td></tr>';
 
     const [statsResult, usersResult, analysesResult] = await Promise.allSettled([
@@ -535,12 +595,13 @@ async function loadAdminPanel() {
                     <td>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
                     <td>${escapeHtml(user.email)}</td>
                     <td>${escapeHtml(user.role)}</td>
+                    <td>${Number(user.credits) || 0}</td>
                     <td>${escapeHtml(user.createdAt)}</td>
                 </tr>
-            `).join("") || '<tr><td colspan="5">Henüz üye yok.</td></tr>';
+            `).join("") || '<tr><td colspan="6">Henüz üye yok.</td></tr>';
         }
     } else {
-        if (usersBody) usersBody.innerHTML = '<tr><td colspan="5">' +
+        if (usersBody) usersBody.innerHTML = '<tr><td colspan="6">' +
             escapeHtml(usersResult.reason.message || "Üye listesi yüklenemedi.") + '</td></tr>';
         errors.push("Üye listesi: " + usersResult.reason.message);
     }
@@ -664,6 +725,28 @@ async function refreshMemberPanel() {
         ]);
 
         const user = profileData.user;
+        updateCreditDisplay(user.credits);
+
+        const creditHistoryBox = document.getElementById("memberCreditHistoryList");
+        const creditTransactions = profileData.creditTransactions || [];
+        if (creditHistoryBox) {
+            creditHistoryBox.innerHTML = creditTransactions.length
+                ? creditTransactions.map(item => {
+                    const amount = Number(item.amount) || 0;
+                    const positive = amount > 0;
+                    const amountText = (positive ? "+" : "") + amount + " kredi";
+                    return `
+                        <div class="member-credit-item">
+                            <div>
+                                <strong>${memberEscapeHTML(item.description || "Kredi hareketi")}</strong>
+                                <span>${memberEscapeHTML(memberDate(item.createdAt))}</span>
+                            </div>
+                            <strong class="${positive ? "credit-positive" : "credit-negative"}">${amountText}</strong>
+                        </div>
+                    `;
+                }).join("")
+                : '<p class="member-hint">Henüz kredi hareketi bulunmuyor.</p>';
+        }
 
         document.getElementById("memberFirstName").value = user.firstName || "";
         document.getElementById("memberLastName").value = user.lastName || "";

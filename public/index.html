@@ -31,6 +31,7 @@
     <div class="member-actions hidden" id="memberActions">
         <div class="member-info">
             <span id="headerUserName">Üye</span>
+            <span class="credit-pill" id="headerCreditBalance">— kredi</span>
         </div>
         <button class="login-btn hidden" id="adminOpenButton" data-action="admin-open">Yönetim</button>
         <button class="login-btn" data-member-action="open">Hesabım</button>
@@ -233,8 +234,8 @@
             </div>
             <div class="admin-table-wrap">
                 <table class="admin-table">
-                    <thead><tr><th>ID</th><th>Üye</th><th>E-posta</th><th>Rol</th><th>Kayıt</th></tr></thead>
-                    <tbody id="adminUsersBody"><tr><td colspan="5">Yükleniyor…</td></tr></tbody>
+                    <thead><tr><th>ID</th><th>Üye</th><th>E-posta</th><th>Rol</th><th>Kredi</th><th>Kayıt</th></tr></thead>
+                    <tbody id="adminUsersBody"><tr><td colspan="6">Yükleniyor…</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -282,8 +283,14 @@
 
         <div class="member-summary">
             <div><span class="member-label">E-posta</span><strong id="memberSummaryEmail">—</strong></div>
+            <div><span class="member-label">Kredi bakiyesi</span><strong id="memberCreditBalance">—</strong></div>
             <div><span class="member-label">Hesap durumu</span><strong>Aktif</strong></div>
         </div>
+
+        <section class="member-section">
+            <h3>Kredi hareketlerim</h3>
+            <div id="memberCreditHistoryList"><p class="member-hint">Kredi hareketleri yükleniyor…</p></div>
+        </section>
 
         <section class="member-section">
             <h3>Profil bilgilerim</h3>
@@ -409,7 +416,7 @@
             <div class="analysis-actions">
                 <button class="gold-btn form-submit" id="analysisSubmit" type="submit">Analizi Başlat ✧</button>
             </div>
-            <p class="analysis-hint">Analizini başlat ve sonucunu analiz geçmişinde sakla.</p>
+            <p class="analysis-hint" id="analysisCreditHint">Analizini başlat ve sonucunu analiz geçmişinde sakla.</p>
         </form>
 
         <div class="analysis-loading hidden" id="analysisLoading">
