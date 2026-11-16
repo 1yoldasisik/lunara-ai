@@ -491,23 +491,26 @@ function escapeHtml(value) {
     })[char]);
 }
 
+const adminAnalysisCache = new Map();
+
 async function loadAdminPanel() {
     const message = document.getElementById("adminMessage");
     const usersBody = document.getElementById("adminUsersBody");
+    const analysesBody = document.getElementById("adminAnalysesBody");
     const statUsers = document.getElementById("statUsers");
     const statAnalyses = document.getElementById("statAnalyses");
 
     if (message) message.textContent = "Yönetici verileri yükleniyor…";
     if (usersBody) usersBody.innerHTML = '<tr><td colspan="5">Yükleniyor…</td></tr>';
+    if (analysesBody) analysesBody.innerHTML = '<tr><td colspan="6">Yükleniyor…</td></tr>';
 
-    // İstatistik ve üye listesi birbirinden bağımsız yüklenir.
-    // Böylece bir istekteki hata diğer verilerin görüntülenmesini engellemez.
-    const [statsResult, usersResult] = await Promise.allSettled([
+    const [statsResult, usersResult, analysesResult] = await Promise.allSettled([
         apiRequest("/api/admin/stats", { method: "GET", headers: {} }),
-        apiRequest("/api/admin/users", { method: "GET", headers: {} })
+        apiRequest("/api/admin/users", { method: "GET", headers: {} }),
+        apiRequest("/api/admin/analyses", { method: "GET", headers: {} })
     ]);
 
-    let errors = [];
+    const errors = [];
 
     if (statsResult.status === "fulfilled") {
         const stats = statsResult.value.stats || {};
@@ -533,23 +536,56 @@ async function loadAdminPanel() {
             `).join("") || '<tr><td colspan="5">Henüz üye yok.</td></tr>';
         }
     } else {
-        if (usersBody) {
-            usersBody.innerHTML = '<tr><td colspan="5">' +
-                escapeHtml(usersResult.reason.message || "Üye listesi yüklenemedi.") +
-                '</td></tr>';
-        }
+        if (usersBody) usersBody.innerHTML = '<tr><td colspan="5">' +
+            escapeHtml(usersResult.reason.message || "Üye listesi yüklenemedi.") + '</td></tr>';
         errors.push("Üye listesi: " + usersResult.reason.message);
     }
 
-    if (message) {
-        message.textContent = errors.length
-            ? errors.join(" • ")
-            : "Veriler güncellendi.";
+    if (analysesResult.status === "fulfilled") {
+        const analyses = analysesResult.value.analyses || [];
+        adminAnalysisCache.clear();
+        analyses.forEach(item => adminAnalysisCache.set(Number(item.id), item));
+
+        if (analysesBody) {
+            analysesBody.innerHTML = analyses.map(item => `
+                <tr>
+                    <td>${item.id}</td>
+                    <td>${escapeHtml(item.first_name)} ${escapeHtml(item.last_name)}<br>${escapeHtml(item.email)}</td>
+                    <td>${escapeHtml(item.analysis_type)}</td>
+                    <td>${escapeHtml(item.title)}</td>
+                    <td>${escapeHtml(item.created_at)}</td>
+                    <td><button type="button" class="login-btn" data-admin-analysis-read="${item.id}">Yorumu Oku</button></td>
+                </tr>
+            `).join("") || '<tr><td colspan="6">Henüz kayıtlı analiz yok.</td></tr>';
+        }
+    } else {
+        if (analysesBody) analysesBody.innerHTML = '<tr><td colspan="6">' +
+            escapeHtml(analysesResult.reason.message || "Analizler yüklenemedi.") + '</td></tr>';
+        errors.push("Analizler: " + analysesResult.reason.message);
     }
 
+    if (message) message.textContent = errors.length
+        ? errors.join(" • ")
+        : "Veriler güncellendi.";
     if (errors.some(error => /yetki|yönetici|giriş/i.test(error))) {
         adminModal.classList.add("hidden");
     }
+}
+
+function showAdminAnalysis(id) {
+    const item = adminAnalysisCache.get(Number(id));
+    if (!item) return;
+
+    document.getElementById("adminAnalysisDetailTitle").textContent =
+        item.title || "Analiz #" + item.id;
+    document.getElementById("adminAnalysisDetailMeta").textContent =
+        (item.first_name || "") + " " + (item.last_name || "") +
+        " • " + (item.email || "") + " • " + (item.analysis_type || "Analiz") +
+        " • " + (item.created_at || "");
+    document.getElementById("adminAnalysisDetailContent").textContent =
+        item.content || "Bu analiz kaydında içerik bulunmuyor.";
+    document.getElementById("adminAnalysisDetail").classList.remove("hidden");
+    document.getElementById("adminAnalysisDetail").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function openAdminPanel() {
@@ -565,6 +601,17 @@ function closeAdminPanel() {
 
 adminModal.addEventListener("click", event => {
     if (event.target === adminModal) closeAdminPanel();
+});
+
+document.addEventListener("click", event => {
+    const readButton = event.target.closest("[data-admin-analysis-read]");
+    if (readButton) {
+        showAdminAnalysis(readButton.dataset.adminAnalysisRead);
+        return;
+    }
+    if (event.target.closest('[data-action="admin-analysis-detail-close"]')) {
+        document.getElementById("adminAnalysisDetail")?.classList.add("hidden");
+    }
 });
 
 // CSP uyumlu tiklama yonetimi
