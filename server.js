@@ -126,6 +126,10 @@ db.exec(`
     ON admin_audit(created_at);
 `);
 
+const analysisColumns = db.prepare("PRAGMA table_info(analyses)").all();
+if (!analysisColumns.some(column => column.name === "question")) {
+    db.exec("ALTER TABLE analyses ADD COLUMN question TEXT NOT NULL DEFAULT ''");
+}
 const userColumns = db.prepare("PRAGMA table_info(users)").all();
 if (!userColumns.some(column => column.name === "bio")) {
     db.exec("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''");
@@ -920,9 +924,9 @@ app.post("/api/analyses", requireSameOrigin, requireLogin, analysisLimiter, asyn
         const content = await generateGeminiAnalysis(prompt, image);
 
 const result = db.prepare(`
-    INSERT INTO analyses (user_id, analysis_type, title, content, credits_spent)
-    VALUES (?, ?, ?, ?, 0)
-`).run(req.session.userId, type, config.title, content);
+    INSERT INTO analyses (user_id, analysis_type, title, question, content, credits_spent)
+    VALUES (?, ?, ?, ?, ?, 0)
+`).run(req.session.userId, type, config.title, question, content);
 
         res.json({
     success: true,
@@ -1036,7 +1040,7 @@ app.get("/api/admin/users", requireAdmin, (req, res) => {
 
 app.get("/api/admin/analyses", requireAdmin, (req, res) => {
     const rows = db.prepare(`
-        SELECT a.id, a.user_id, a.analysis_type, a.title, a.content,
+        SELECT a.id, a.user_id, a.analysis_type, a.title, a.question, a.content,
                a.created_at,
                u.first_name, u.last_name, u.email
         FROM analyses a
