@@ -279,7 +279,17 @@ function openFeature(featureName) {
     const type = featureTypes[normalized] || "personal";
     document.getElementById("analysisForm").reset();
     document.getElementById("analysisType").value = type;
-    document.getElementById("analysisTitle").textContent = titles[type];
+    const featureTitles = {
+        tarot: "Tarot Falı",
+        coffee: "Kahve Falı",
+        horoscope: "Burçlar",
+        birthchart: "Doğum Haritası",
+        love: "Aşk Falı",
+        numerology: "Numeroloji",
+        general: "Genel Fal",
+        personal: "Kişisel Analiz"
+    };
+    document.getElementById("analysisTitle").textContent = featureTitles[type] || "Kişisel Analiz";
     document.getElementById("analysisDescription").textContent =
         "Gemini yapay zekâsı ile hazırlanan sana özel sembolik yorum.";
     const personalTypes = ["birthchart", "love", "numerology", "general", "personal"];
