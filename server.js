@@ -274,12 +274,13 @@ const analysisLimiter = rateLimit({
     message: { success: false, message: "Saatlik analiz sınırına ulaştınız. Daha sonra tekrar deneyin." }
 });
 
-const ANALYSIS_TYPES = {
-    tarot: { title: "Tarot Falı" },
-    coffee: { title: "Kahve Falı" },
-    horoscope: { title: "Burç Yorumu" },
-    personal: { title: "Kişisel Analiz" }
-};
+const INITIAL_CREDITS = 20;
+const ANALYSIS_TYPES = Object.freeze({
+    tarot: { title: "Tarot Falı", cost: 5 },
+    coffee: { title: "Kahve Falı", cost: 8 },
+    horoscope: { title: "Burç Yorumu", cost: 2 },
+    personal: { title: "Kişisel Analiz", cost: 5 }
+});
 
 async function generateGeminiAnalysis(prompt, image) {
     if (!GEMINI_API_KEY) {
@@ -503,6 +504,7 @@ function publicUser(user) {
         email: user.email,
         bio: user.bio || "",
         role: user.role,
+        credits: Number(user.credits ?? 0),
         createdAt: user.created_at
     };
 }
@@ -537,7 +539,7 @@ app.get("/api/auth/me", (req, res) => {
 
     const user = db.prepare(`
         SELECT id, first_name, last_name, birth_date,
-               email, bio, role, created_at
+               email, bio, credits, role, created_at
         FROM users WHERE id = ?
     `).get(req.session.userId);
 
@@ -617,14 +619,20 @@ app.post("/api/auth/register", requireSameOrigin, registerLimiter, async (req, r
         const passwordHash = await bcrypt.hash(password, 12);
 
         const createUser = db.transaction(() => {
-    const result = db.prepare(`
-        INSERT INTO users
-        (first_name, last_name, birth_date, email, password_hash, credits)
-        VALUES (?, ?, ?, ?, ?, 0)
-    `).run(firstName, lastName, birthDate, email, passwordHash);
+            const result = db.prepare(`
+                INSERT INTO users
+                (first_name, last_name, birth_date, email, password_hash, credits)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `).run(firstName, lastName, birthDate, email, passwordHash, INITIAL_CREDITS);
 
-    return Number(result.lastInsertRowid);
-});
+            const newUserId = Number(result.lastInsertRowid);
+            db.prepare(`
+                INSERT INTO credit_transactions (user_id, amount, description)
+                VALUES (?, ?, ?)
+            `).run(newUserId, INITIAL_CREDITS, "Üyelik başlangıç kredisi");
+
+            return newUserId;
+        });
 
         let userId;
 
@@ -644,7 +652,7 @@ app.post("/api/auth/register", requireSameOrigin, registerLimiter, async (req, r
 
         const user = db.prepare(`
             SELECT id, first_name, last_name, birth_date,
-                   email, role, created_at
+                   email, credits, role, created_at
             FROM users WHERE id = ?
         `).get(userId);
 
@@ -729,7 +737,24 @@ app.get("/api/member", requireLogin, (req, res) => {
         });
     }
 
-    res.json({ success: true, user: publicUser(user) });
+    const creditTransactions = db.prepare(`
+        SELECT id, amount, description, created_at
+        FROM credit_transactions
+        WHERE user_id = ?
+        ORDER BY id DESC
+        LIMIT 50
+    `).all(req.session.userId);
+
+    res.json({
+        success: true,
+        user: publicUser(user),
+        creditTransactions: creditTransactions.map(row => ({
+            id: row.id,
+            amount: row.amount,
+            description: row.description,
+            createdAt: row.created_at
+        }))
+    });
 });
 
 app.put("/api/member/profile", requireSameOrigin, requireLogin, (req, res) => {
@@ -945,6 +970,22 @@ app.post("/api/analyses", requireSameOrigin, requireLogin, analysisLimiter, asyn
             return res.status(400).json({ success: false, message: "Geçersiz analiz türü." });
         }
 
+        const account = db.prepare("SELECT credits FROM users WHERE id = ?")
+            .get(req.session.userId);
+
+        if (!account) {
+            return res.status(401).json({ success: false, message: "Üyelik oturumu bulunamadı. Yeniden giriş yapın." });
+        }
+
+        if (account.credits < config.cost) {
+            return res.status(402).json({
+                success: false,
+                message: `Bu analiz için ${config.cost} kredi gerekiyor. Mevcut bakiyeniz: ${account.credits} kredi.`,
+                requiredCredits: config.cost,
+                credits: account.credits
+            });
+        }
+
         const question = String(req.body.question || "").trim().slice(0, 1200);
         const details = req.body.details && typeof req.body.details === "object"
             ? req.body.details
@@ -986,21 +1027,77 @@ app.post("/api/analyses", requireSameOrigin, requireLogin, analysisLimiter, asyn
 
         const content = await generateGeminiAnalysis(prompt, image);
 
-const result = db.prepare(`
-    INSERT INTO analyses (user_id, analysis_type, title, question, content, credits_spent)
-    VALUES (?, ?, ?, ?, ?, 0)
-`).run(req.session.userId, type, config.title, question, content);
+        // Kredi düşümü, analiz kaydı ve hareket kaydı tek SQLite transaction'ında.
+        // Eşzamanlı isteklerde bakiye koşullu UPDATE ile tekrar doğrulanır.
+        const saveAnalysisAndCharge = db.transaction(() => {
+            const debit = db.prepare(`
+                UPDATE users
+                SET credits = credits - ?
+                WHERE id = ? AND credits >= ?
+            `).run(config.cost, req.session.userId, config.cost);
+
+            if (debit.changes !== 1) {
+                const current = db.prepare("SELECT credits FROM users WHERE id = ?")
+                    .get(req.session.userId);
+                return { insufficientCredits: true, credits: Number(current?.credits ?? 0) };
+            }
+
+            const result = db.prepare(`
+                INSERT INTO analyses
+                (user_id, analysis_type, title, question, content, credits_spent)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `).run(
+                req.session.userId,
+                type,
+                config.title,
+                question,
+                content,
+                config.cost
+            );
+
+            const analysisId = Number(result.lastInsertRowid);
+            db.prepare(`
+                INSERT INTO credit_transactions (user_id, amount, description)
+                VALUES (?, ?, ?)
+            `).run(
+                req.session.userId,
+                -config.cost,
+                `${config.title} analizi (#${analysisId})`
+            );
+
+            const balance = db.prepare("SELECT credits FROM users WHERE id = ?")
+                .get(req.session.userId);
+
+            return {
+                insufficientCredits: false,
+                analysisId,
+                credits: Number(balance.credits)
+            };
+        });
+
+        const saved = saveAnalysisAndCharge();
+
+        if (saved.insufficientCredits) {
+            return res.status(402).json({
+                success: false,
+                message: `Bu analiz için ${config.cost} kredi gerekiyor. Mevcut bakiyeniz: ${saved.credits} kredi.`,
+                requiredCredits: config.cost,
+                credits: saved.credits
+            });
+        }
 
         res.json({
-    success: true,
-    message: "Analiziniz hazır.",
-    analysis: {
-        id: Number(result.lastInsertRowid),
-        type,
-        title: config.title,
-        content
-    }
-});
+            success: true,
+            message: `Analiziniz hazır. ${config.cost} kredi kullanıldı.`,
+            creditsSpent: config.cost,
+            creditsRemaining: saved.credits,
+            analysis: {
+                id: saved.analysisId,
+                type,
+                title: config.title,
+                content
+            }
+        });
     } catch (error) {
         if (error.status) {
             return res.status(error.status).json({ success: false, message: error.message });
@@ -1082,7 +1179,7 @@ app.get("/api/admin/stats", requireAdmin, (req, res) => {
 
 app.get("/api/admin/users", requireAdmin, (req, res) => {
     const users = db.prepare(`
-        SELECT id, first_name, last_name, email, role, created_at
+        SELECT id, first_name, last_name, email, role, credits, created_at
         FROM users
         ORDER BY id DESC
         LIMIT 200
@@ -1096,6 +1193,7 @@ app.get("/api/admin/users", requireAdmin, (req, res) => {
             lastName: user.last_name,
             email: user.email,
             role: user.role,
+            credits: Number(user.credits ?? 0),
             createdAt: user.created_at
         }))
     });
