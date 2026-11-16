@@ -283,7 +283,7 @@ const ANALYSIS_TYPES = {
 
 async function generateGeminiAnalysis(prompt, image) {
     if (!GEMINI_API_KEY) {
-        const error = new Error("Gemini API anahtarı sunucuda tanımlı değil. .env dosyasını kontrol edin.");
+        const error = new Error("AI analiz servisi yapılandırılmamış. Lütfen daha sonra tekrar deneyin.");
         error.status = 503;
         throw error;
     }
@@ -298,15 +298,28 @@ async function generateGeminiAnalysis(prompt, image) {
         });
     }
 
-    const modelCandidates = [...new Set([GEMINI_MODEL, "gemini-3.5-flash-lite"].filter(Boolean))];
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 90000);
+    const configuredFallbacks = String(process.env.GEMINI_FALLBACK_MODELS || "gemini-3.1-flash-lite")
+        .split(",")
+        .map(model => model.trim())
+        .filter(Boolean);
+    const modelCandidates = [...new Set([GEMINI_MODEL, ...configuredFallbacks].filter(Boolean))];
+    const retryableStatuses = new Set([408, 429, 500, 502, 503, 504]);
+    const timeoutMs = 30000;
+    let lastFailure = null;
 
-    try {
-        for (let index = 0; index < modelCandidates.length; index++) {
-            const model = modelCandidates[index];
+    const systemInstruction = "Sen Lunara AI adlı Türkçe spiritüel keşif platformunun deneyimli, dikkatli ve yaratıcı yorumcususun. Daima Türkçe yanıt ver. Üslubun zarif, mistik, empatik ama ölçülü olsun. Yanıtları başlıklarla, anlaşılır ve ayrıntılı yaz. Tarot, kahve falı ve astrolojiyi sembolik/eğlence amaçlı yorumla; kesin gelecek iddiasında bulunma. Sağlık, hukuk, finans gibi önemli konularda kesin tavsiye verme. Kullanıcıyı korkutma, bağımlı kılma veya kesin sonuç vaat etme. Görselde seçilemeyen ayrıntıları uydurma; belirsizliği açıkça belirt.";
+
+    for (let index = 0; index < modelCandidates.length; index++) {
+        const model = modelCandidates[index];
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+        try {
+            console.log("[GEMINI] Model deneniyor:", model);
+
             const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+                "https://generativelanguage.googleapis.com/v1beta/models/" +
+                    encodeURIComponent(model) + ":generateContent",
                 {
                     method: "POST",
                     headers: {
@@ -315,9 +328,7 @@ async function generateGeminiAnalysis(prompt, image) {
                     },
                     body: JSON.stringify({
                         systemInstruction: {
-                            parts: [{
-                                text: "Sen Lunara AI adlı Türkçe spiritüel keşif platformunun deneyimli, dikkatli ve yaratıcı yorumcususun. Daima Türkçe yanıt ver. Üslubun zarif, mistik, empatik ama ölçülü olsun. Yanıtları başlıklarla, anlaşılır ve ayrıntılı yaz. Tarot, kahve falı ve astrolojiyi sembolik/eğlence amaçlı yorumla; kesin gelecek iddiasında bulunma. Sağlık, hukuk, finans gibi önemli konularda kesin tavsiye verme. Kullanıcıyı korkutma, bağımlı kılma veya kesin sonuç vaat etme. Görselde seçilemeyen ayrıntıları uydurma; belirsizliği açıkça belirt."
-                            }]
+                            parts: [{ text: systemInstruction }]
                         },
                         contents: [{ role: "user", parts }],
                         generationConfig: {
@@ -329,52 +340,88 @@ async function generateGeminiAnalysis(prompt, image) {
             );
 
             const result = await response.json().catch(() => ({}));
-            if (!response.ok) {
-                console.error("Gemini API yanıtı (" + model + "):", response.status, result?.error?.message || "Bilinmeyen hata");
 
-                if (response.status === 503 && index < modelCandidates.length - 1) {
-                    console.warn("Ana Gemini modeli yoğun; yedek model deneniyor.");
+            if (!response.ok) {
+                const providerMessage = String(result?.error?.message || "Bilinmeyen sağlayıcı hatası")
+                    .replace(/[\r\n]+/g, " ")
+                    .slice(0, 240);
+
+                console.error("[GEMINI] Model hatası:", model, "HTTP", response.status, providerMessage);
+
+                const canTryNext = retryableStatuses.has(response.status) ||
+                    response.status === 404;
+                if (canTryNext && index < modelCandidates.length - 1) {
+                    lastFailure = { status: response.status, model };
+                    console.warn("[GEMINI] Yedek modele geçiliyor.");
                     continue;
                 }
 
                 const error = new Error(
                     response.status === 429
-                        ? "Gemini kullanım sınırına ulaşıldı. Biraz sonra tekrar deneyin."
+                        ? "AI servisi geçici kullanım sınırına ulaştı. Birkaç dakika sonra tekrar deneyin."
                         : response.status === 400
-                            ? "Gemini isteği kabul etmedi. Girdi bilgilerini kontrol edin."
-                            : response.status === 503
-                                ? "AI servisi şu anda yoğun. Birkaç dakika sonra tekrar deneyin."
-                                : "AI analiz servisine şu anda ulaşılamıyor."
+                            ? "Analiz isteği geçersiz. Girdi bilgilerini kontrol edip tekrar deneyin."
+                            : response.status === 401 || response.status === 403
+                                ? "AI servisine erişim şu anda yapılandırma nedeniyle başarısız."
+                                : response.status === 503 || response.status === 500
+                                    ? "AI servisleri şu anda yoğun veya geçici olarak kullanılamıyor. Biraz sonra tekrar deneyin."
+                                    : "AI analiz servisi şu anda yanıt veremiyor. Lütfen tekrar deneyin."
                 );
-                error.status = response.status === 429 ? 429 : response.status === 503 ? 503 : 502;
+                error.status = response.status === 429 ? 429 :
+                    response.status === 400 ? 400 :
+                    response.status === 503 || response.status === 500 ? 503 : 502;
                 throw error;
             }
 
-            const text = result?.candidates?.[0]?.content?.parts
-                ?.map(part => part.text || "")
-                .join("\\n")
+            const generatedText = result?.candidates?.[0]?.content?.parts
+                ?.map(part => typeof part.text === "string" ? part.text : "")
+                .filter(Boolean)
+                .join("\n")
                 .trim();
 
-            if (!text) {
-                throw new Error("AI bu analiz için yanıt oluşturamadı. Lütfen tekrar deneyin.");
+            if (generatedText) {
+                console.log("[GEMINI] Analiz başarıyla üretildi:", model);
+                return generatedText;
             }
 
-            return text;
-        }
+            lastFailure = { status: 502, model };
+            console.warn("[GEMINI] Model boş yanıt döndürdü:", model);
+            if (index < modelCandidates.length - 1) {
+                continue;
+            }
+        } catch (error) {
+            const timedOut = error.name === "AbortError";
+            lastFailure = {
+                status: timedOut ? 504 : 502,
+                model
+            };
 
-        const unavailable = new Error("AI analiz servisi şu anda yanıt veremiyor. Lütfen tekrar deneyin.");
-        unavailable.status = 503;
-        throw unavailable;
-    } catch (error) {
-        if (error.name === "AbortError") {
-            const timeoutError = new Error("Analiz zaman aşımına uğradı. Lütfen tekrar deneyin.");
-            timeoutError.status = 504;
-            throw timeoutError;
+            console.error(
+                "[GEMINI] İstek başarısız:",
+                model,
+                timedOut ? "Zaman aşımı" : error.name || "Bağlantı hatası"
+            );
+
+            if (error.status) {
+                throw error;
+            }
+
+            if (index < modelCandidates.length - 1) {
+                console.warn("[GEMINI] Bağlantı/yanıt hatası nedeniyle yedek model deneniyor.");
+                continue;
+            }
+        } finally {
+            clearTimeout(timeout);
         }
-        throw error;
-    } finally {
-        clearTimeout(timeout);
     }
+
+    const unavailable = new Error(
+        lastFailure?.status === 504
+            ? "AI analizi zamanında yanıt vermedi. Lütfen tekrar deneyin."
+            : "Ana ve yedek AI modelleri şu anda yanıt veremiyor. Birkaç dakika sonra tekrar deneyin."
+    );
+    unavailable.status = lastFailure?.status === 504 ? 504 : 503;
+    throw unavailable;
 }
 
 function requireSameOrigin(req, res, next) {
