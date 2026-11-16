@@ -239,6 +239,29 @@
             </div>
         </div>
 
+
+        <div class="admin-section">
+            <div class="admin-section-title">
+                <h3>Analizler ve yorumlar</h3>
+                <span class="admin-hint">Son 100 kayıt</span>
+            </div>
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead><tr><th>ID</th><th>Üye</th><th>Analiz türü</th><th>Başlık</th><th>Tarih</th><th>İçerik</th></tr></thead>
+                    <tbody id="adminAnalysesBody"><tr><td colspan="6">Yükleniyor…</td></tr></tbody>
+                </table>
+            </div>
+            <div id="adminAnalysisDetail" class="admin-analysis-detail hidden">
+                <div class="admin-analysis-detail-heading">
+                    <div>
+                        <h3 id="adminAnalysisDetailTitle">Analiz detayı</h3>
+                        <p id="adminAnalysisDetailMeta" class="admin-hint"></p>
+                    </div>
+                    <button type="button" class="login-btn" data-action="admin-analysis-detail-close">Kapat</button>
+                </div>
+                <pre id="adminAnalysisDetailContent" class="admin-analysis-content"></pre>
+            </div>
+        </div>
     </section>
 </div>
 
