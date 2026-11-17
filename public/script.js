@@ -470,12 +470,34 @@ function playLunaraAnalysis() {
     window.speechSynthesis.cancel();
     lunaraUtterance = new SpeechSynthesisUtterance(text);
     lunaraUtterance.lang = "tr-TR";
-    lunaraUtterance.rate = 0.94;
-    lunaraUtterance.pitch = 1;
+    // Yumuşak, sakin ve mistik anlatım: daha yavaş tempo ve hafifçe sıcak ton.
+    lunaraUtterance.rate = 0.88;
+    lunaraUtterance.pitch = 1.08;
     lunaraUtterance.volume = Number(document.getElementById("analysisSpeechVolume").value);
+
+    // Önce Türkçe kadın seslerini, ardından doğal/Neural olarak adlandırılan
+    // Türkçe sesleri tercih et. Tarayıcılar ses cinsiyetini standart biçimde
+    // bildirmediği için isim tabanlı seçim yapılır; uygun eşleşme yoksa
+    // mevcut Türkçe seslerden biri kullanılır.
     const voices = window.speechSynthesis.getVoices();
-    const turkishVoice = voices.find(voice => voice.lang && voice.lang.toLowerCase().startsWith("tr"));
-    if (turkishVoice) lunaraUtterance.voice = turkishVoice;
+    const turkishVoices = voices.filter(voice =>
+        voice.lang && voice.lang.toLowerCase().startsWith("tr")
+    );
+    const femaleVoiceHints = [
+        "female", "woman", "emel", "yelda", "aylin", "seda", "filiz",
+        "defne", "selin", "eda", "ipek", "ipek", "zeynep", "merve",
+        "elif", "banu", "asli", "aslı", "gul", "gül", "naz", "dilara"
+    ];
+    const naturalVoiceHints = ["natural", "neural", "online", "premium"];
+    const scoreVoice = voice => {
+        const name = voice.name.toLocaleLowerCase("tr-TR");
+        let score = voice.lang.toLowerCase() === "tr-tr" ? 3 : 0;
+        if (femaleVoiceHints.some(hint => name.includes(hint))) score += 10;
+        if (naturalVoiceHints.some(hint => name.includes(hint))) score += 5;
+        return score;
+    };
+    turkishVoices.sort((a, b) => scoreVoice(b) - scoreVoice(a));
+    if (turkishVoices.length) lunaraUtterance.voice = turkishVoices[0];
     lunaraUtterance.onstart = () => {
         lunaraSpeechActive = true;
         document.getElementById("lunaraAudioStatus").textContent = "Analizin seslendiriliyor…";
