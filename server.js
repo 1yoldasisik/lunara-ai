@@ -137,6 +137,9 @@ if (!userColumns.some(column => column.name === "bio")) {
 if (!userColumns.some(column => column.name === "avatar_data")) {
     db.exec("ALTER TABLE users ADD COLUMN avatar_data TEXT");
 }
+if (!userColumns.some(column => column.name === "status")) {
+    db.exec("ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
+}
 
 class SQLiteSessionStore extends session.Store {
     get(sid, callback) {
@@ -465,6 +468,26 @@ function requireLogin(req, res, next) {
         });
     }
 
+    const account = db.prepare("SELECT status FROM users WHERE id = ?")
+        .get(req.session.userId);
+
+    if (!account || account.status !== "active") {
+        return req.session.destroy(() => {
+            res.clearCookie("lunara.sid", {
+                httpOnly: true,
+                secure: IS_PRODUCTION,
+                sameSite: "lax"
+            });
+            res.status(403).json({
+                success: false,
+                code: account?.status === "inactive" ? "ACCOUNT_DISABLED" : "ACCOUNT_UNAVAILABLE",
+                message: account?.status === "inactive"
+                    ? "Hesabınız geçici olarak devre dışı. Giriş ekranından yeniden etkinleştirebilirsiniz."
+                    : "Bu hesap artık kullanılamıyor."
+            });
+        });
+    }
+
     next();
 }
 
@@ -476,10 +499,10 @@ function requireAdmin(req, res, next) {
         });
     }
 
-    const user = db.prepare("SELECT id, role FROM users WHERE id = ?")
+    const user = db.prepare("SELECT id, role, status FROM users WHERE id = ?")
         .get(req.session.userId);
 
-    if (!user || user.role !== "admin") {
+    if (!user || user.role !== "admin" || user.status !== "active") {
         return res.status(403).json({
             success: false,
             message: "Bu alana erişim yetkiniz yok."
@@ -506,6 +529,7 @@ function publicUser(user) {
         email: user.email,
         bio: user.bio || "",
         role: user.role,
+        status: user.status || "active",
         createdAt: user.created_at
     };
 }
@@ -544,8 +568,13 @@ app.get("/api/auth/me", (req, res) => {
         FROM users WHERE id = ?
     `).get(req.session.userId);
 
-    if (!user) {
+    if (!user || user.status !== "active") {
         return req.session.destroy(() => {
+            res.clearCookie("lunara.sid", {
+                httpOnly: true,
+                secure: IS_PRODUCTION,
+                sameSite: "lax"
+            });
             res.json({ success: true, user: null });
         });
     }
@@ -676,10 +705,20 @@ app.post("/api/auth/login", requireSameOrigin, loginLimiter, async (req, res, ne
             "SELECT * FROM users WHERE email = ?"
         ).get(email);
 
-        if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+        if (!user || user.status === "deleted" ||
+            !(await bcrypt.compare(password, user.password_hash))) {
             return res.status(401).json({
                 success: false,
                 message: "E-posta veya şifre hatalı."
+            });
+        }
+
+        if (user.status === "inactive") {
+            return res.status(403).json({
+                success: false,
+                code: "ACCOUNT_DISABLED",
+                accountDisabled: true,
+                message: "Hesabınız geçici olarak devre dışı. Yeniden etkinleştirmek için aşağıdaki düğmeyi kullanın."
             });
         }
 
@@ -689,6 +728,39 @@ app.post("/api/auth/login", requireSameOrigin, loginLimiter, async (req, res, ne
             success: true,
             message: "Giriş başarılı.",
             user: publicUser(user)
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post("/api/auth/reactivate", requireSameOrigin, loginLimiter, async (req, res, next) => {
+    try {
+        const email = String(req.body.email || "").trim().toLowerCase();
+        const password = String(req.body.password || "");
+        const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+
+        if (!user || user.status !== "inactive" ||
+            !(await bcrypt.compare(password, user.password_hash))) {
+            return res.status(401).json({
+                success: false,
+                message: "E-posta veya şifre hatalı; hesap yeniden etkinleştirilemedi."
+            });
+        }
+
+        db.prepare("UPDATE users SET status = 'active' WHERE id = ?").run(user.id);
+        await regenerateSession(req, user.id);
+
+        const activeUser = db.prepare(`
+            SELECT id, first_name, last_name, birth_date, email, bio,
+                   credits, role, created_at, status
+            FROM users WHERE id = ?
+        `).get(user.id);
+
+        return res.json({
+            success: true,
+            message: "Hesabınız yeniden etkinleştirildi.",
+            user: publicUser(activeUser)
         });
     } catch (error) {
         next(error);
@@ -902,6 +974,154 @@ app.put("/api/member/email", requireSameOrigin, requireLogin, async (req, res, n
                 message: "Bu e-posta adresi zaten kullaniliyor."
             });
         }
+        next(error);
+    }
+});
+
+
+function destroyUserSessions(userId) {
+    const rows = db.prepare("SELECT sid, sess FROM sessions").all();
+    const remove = db.prepare("DELETE FROM sessions WHERE sid = ?");
+    for (const row of rows) {
+        try {
+            const data = JSON.parse(row.sess);
+            if (Number(data.userId) === Number(userId)) remove.run(row.sid);
+        } catch {
+            // Ignore malformed session rows; they cannot be trusted or resumed.
+        }
+    }
+}
+
+function anonymizeAnalysisText(value, personalValues) {
+    let result = String(value || "");
+    for (const valueToRemove of personalValues) {
+        const needle = String(valueToRemove || "").trim();
+        if (needle.length < 2) continue;
+        const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\app.post("/api/member/password", requireSameOrigin, requireLogin, async (req, res, next) => {");
+        result = result.replace(new RegExp(escaped, "gi"), "[anonim]");
+    }
+    return result.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[anonim e-posta]");
+}
+
+app.post("/api/member/deactivate", requireSameOrigin, requireLogin, async (req, res, next) => {
+    try {
+        const password = String(req.body.password || "");
+        const user = db.prepare("SELECT id, password_hash, status FROM users WHERE id = ?")
+            .get(req.session.userId);
+
+        if (!user || user.status !== "active" ||
+            !(await bcrypt.compare(password, user.password_hash))) {
+            return res.status(401).json({
+                success: false,
+                message: "Mevcut şifreniz hatalı."
+            });
+        }
+
+        db.prepare("UPDATE users SET status = 'inactive' WHERE id = ?").run(user.id);
+        destroyUserSessions(user.id);
+
+        return req.session.destroy(() => {
+            res.clearCookie("lunara.sid", {
+                httpOnly: true,
+                secure: IS_PRODUCTION,
+                sameSite: "lax"
+            });
+            res.json({
+                success: true,
+                message: "Hesabınız geçici olarak devre dışı bırakıldı. Yeniden etkinleştirmek için giriş ekranını kullanabilirsiniz."
+            });
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post("/api/member/delete-account", requireSameOrigin, requireLogin, async (req, res, next) => {
+    try {
+        const password = String(req.body.password || "");
+        const confirmation = String(req.body.confirmation || "");
+        const user = db.prepare("SELECT * FROM users WHERE id = ?")
+            .get(req.session.userId);
+
+        if (!user || user.status !== "active" ||
+            !(await bcrypt.compare(password, user.password_hash))) {
+            return res.status(401).json({
+                success: false,
+                message: "Mevcut şifreniz hatalı."
+            });
+        }
+
+        if (confirmation !== "SIL") {
+            return res.status(400).json({
+                success: false,
+                message: "Kalıcı silme işlemi için SIL onayını yazın."
+            });
+        }
+
+        const personalValues = [
+            user.email,
+            user.first_name,
+            user.last_name,
+            `${user.first_name} ${user.last_name}`,
+            user.birth_date
+        ];
+
+        const randomEmail = `deleted-${user.id}-${crypto.randomBytes(12).toString("hex")}@deleted.invalid`;
+        const randomPasswordHash = await bcrypt.hash(crypto.randomBytes(48).toString("hex"), 12);
+
+        const anonymizeAccount = db.transaction(() => {
+            const analyses = db.prepare(
+                "SELECT id, title, question, content FROM analyses WHERE user_id = ?"
+            ).all(user.id);
+            const updateAnalysis = db.prepare(`
+                UPDATE analyses
+                SET title = ?, question = ?, content = ?
+                WHERE id = ? AND user_id = ?
+            `);
+
+            for (const analysis of analyses) {
+                updateAnalysis.run(
+                    anonymizeAnalysisText(analysis.title, personalValues),
+                    anonymizeAnalysisText(analysis.question, personalValues),
+                    anonymizeAnalysisText(analysis.content, personalValues),
+                    analysis.id,
+                    user.id
+                );
+            }
+
+            db.prepare("DELETE FROM credit_transactions WHERE user_id = ?").run(user.id);
+            db.prepare("DELETE FROM password_reset_tokens WHERE user_id = ?").run(user.id);
+            db.prepare(`
+                UPDATE users
+                SET first_name = 'Silinmiş',
+                    last_name = 'Hesap',
+                    birth_date = '1900-01-01',
+                    email = ?,
+                    password_hash = ?,
+                    credits = 0,
+                    bio = '',
+                    avatar_data = NULL,
+                    role = 'member',
+                    status = 'deleted'
+                WHERE id = ?
+            `).run(randomEmail, randomPasswordHash, user.id);
+        });
+
+        anonymizeAccount();
+        destroyUserSessions(user.id);
+
+        return req.session.destroy(() => {
+            res.clearCookie("lunara.sid", {
+                httpOnly: true,
+                secure: IS_PRODUCTION,
+                sameSite: "lax"
+            });
+            res.json({
+                success: true,
+                message: "Hesabınız kalıcı olarak silindi. Analiz kayıtları kişisel bilgilerden arındırılarak anonim biçimde korundu."
+            });
+        });
+    } catch (error) {
         next(error);
     }
 });
@@ -1129,9 +1349,10 @@ app.delete("/api/analyses", requireSameOrigin, requireLogin, (req, res) => {
 app.get("/api/admin/stats", requireAdmin, (req, res) => {
     const users = db.prepare(`
         SELECT COUNT(*) AS total,
-               SUM(CASE WHEN role = 'member' THEN 1 ELSE 0 END) AS members,
-               SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) AS admins
+               SUM(CASE WHEN role = 'member' AND status != 'deleted' THEN 1 ELSE 0 END) AS members,
+               SUM(CASE WHEN role = 'admin' AND status = 'active' THEN 1 ELSE 0 END) AS admins
         FROM users
+        WHERE status != 'deleted'
     `).get();
 
     const analyses = db.prepare("SELECT COUNT(*) AS total FROM analyses").get();
@@ -1151,6 +1372,7 @@ app.get("/api/admin/users", requireAdmin, (req, res) => {
     const users = db.prepare(`
         SELECT id, first_name, last_name, email, role, created_at
         FROM users
+        WHERE status != 'deleted'
         ORDER BY id DESC
         LIMIT 200
     `).all();
