@@ -997,10 +997,10 @@ function anonymizeAnalysisText(value, personalValues) {
     for (const valueToRemove of personalValues) {
         const needle = String(valueToRemove || "").trim();
         if (needle.length < 2) continue;
-        const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\app.post("/api/member/password", requireSameOrigin, requireLogin, async (req, res, next) => {");
-        result = result.replace(new RegExp(escaped, "gi"), "[anonim]");
+        result = result.split(needle).join("[anonim]");
     }
-    return result.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}/gi, "[anonim e-posta]");
+    const emailPattern = new RegExp("[A-Z0-9._%+-]+@[A-Z0-9.-]+\\\\.[A-Z]{2,}", "gi");
+    return result.replace(emailPattern, "[anonim e-posta]");
 }
 
 app.post("/api/member/deactivate", requireSameOrigin, requireLogin, async (req, res, next) => {
