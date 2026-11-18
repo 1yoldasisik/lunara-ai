@@ -134,6 +134,9 @@ const userColumns = db.prepare("PRAGMA table_info(users)").all();
 if (!userColumns.some(column => column.name === "bio")) {
     db.exec("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''");
 }
+if (!userColumns.some(column => column.name === "avatar_data")) {
+    db.exec("ALTER TABLE users ADD COLUMN avatar_data TEXT");
+}
 
 class SQLiteSessionStore extends session.Store {
     get(sid, callback) {
@@ -716,11 +719,14 @@ app.post("/api/auth/logout", requireSameOrigin, (req, res) => {
 
 app.get("/api/member", requireLogin, (req, res) => {
     const user = db.prepare(`
-        SELECT id, first_name, last_name, birth_date, email, bio, role, created_at
+        SELECT id, first_name, last_name, birth_date, email, bio, avatar_data, role, created_at
         FROM users WHERE id = ?
     `).get(req.session.userId);
     if (!user) return res.status(404).json({ success: false, message: "Uye bulunamadi." });
-    res.json({ success: true, user: publicUser(user) });
+    res.json({
+        success: true,
+        user: { ...publicUser(user), avatarData: user.avatar_data || "" }
+    });
 });
 
 app.put("/api/member/profile", requireSameOrigin, requireLogin, (req, res) => {
@@ -761,7 +767,7 @@ app.put("/api/member/profile", requireSameOrigin, requireLogin, (req, res) => {
     `).run(firstName, lastName, birthDate, bio, req.session.userId);
 
     const user = db.prepare(`
-        SELECT id, first_name, last_name, birth_date, email, bio,
+        SELECT id, first_name, last_name, birth_date, email, bio, avatar_data,
                credits, role, created_at
         FROM users WHERE id = ?
     `).get(req.session.userId);
@@ -769,7 +775,68 @@ app.put("/api/member/profile", requireSameOrigin, requireLogin, (req, res) => {
     res.json({
         success: true,
         message: "Profil bilgileriniz guncellendi.",
-        user: publicUser(user)
+        user: { ...publicUser(user), avatarData: user.avatar_data || "" }
+    });
+});
+
+app.put("/api/member/avatar", requireSameOrigin, requireLogin, (req, res) => {
+    const avatarData = req.body.avatarData;
+
+    if (avatarData === null || avatarData === "") {
+        db.prepare("UPDATE users SET avatar_data = NULL WHERE id = ?")
+            .run(req.session.userId);
+        return res.json({
+            success: true,
+            message: "Profil fotoğrafınız kaldırıldı.",
+            avatarData: ""
+        });
+    }
+
+    if (typeof avatarData !== "string" || avatarData.length > 720000) {
+        return res.status(400).json({
+            success: false,
+            message: "Fotoğraf çok büyük. Daha küçük bir fotoğraf seçin."
+        });
+    }
+
+    const match = avatarData.match(/^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/);
+    if (!match) {
+        return res.status(400).json({
+            success: false,
+            message: "Yalnızca JPG, PNG veya WebP fotoğrafları yükleyebilirsiniz."
+        });
+    }
+
+    const imageBuffer = Buffer.from(match[2], "base64");
+    if (!imageBuffer.length || imageBuffer.length > 512 * 1024 ||
+        imageBuffer.toString("base64") !== match[2]) {
+        return res.status(400).json({
+            success: false,
+            message: "Fotoğraf boyutu 512 KB sınırını aşmamalıdır."
+        });
+    }
+
+    const mime = match[1];
+    const validSignature =
+        (mime === "jpeg" && imageBuffer.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]))) ||
+        (mime === "png" && imageBuffer.subarray(0, 8).equals(Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]))) ||
+        (mime === "webp" && imageBuffer.toString("ascii", 0, 4) === "RIFF" &&
+            imageBuffer.toString("ascii", 8, 12) === "WEBP");
+
+    if (!validSignature) {
+        return res.status(400).json({
+            success: false,
+            message: "Fotoğraf dosyasının içeriği doğrulanamadı."
+        });
+    }
+
+    db.prepare("UPDATE users SET avatar_data = ? WHERE id = ?")
+        .run(avatarData, req.session.userId);
+
+    res.json({
+        success: true,
+        message: "Profil fotoğrafınız güncellendi.",
+        avatarData
     });
 });
 
