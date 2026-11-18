@@ -231,6 +231,17 @@ app.use(session({
 
 app.use(express.static(path.join(__dirname, "public")));
 
+// E-posta istemcilerinin sorgu parametrelerini kaldırmasına karşı tokenı URL yolunda taşı.
+app.get("/reset-password/:token", (req, res, next) => {
+    if (!/^[a-f0-9]{64}$/i.test(String(req.params.token || ""))) {
+        return res.status(404).send("Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş.");
+    }
+
+    res.sendFile(path.join(__dirname, "public", "index.html"), (error) => {
+        if (error) next(error);
+    });
+});
+
 const registerLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
     limit: 5,
@@ -1310,8 +1321,7 @@ app.post("/api/auth/forgot-password", requireSameOrigin, forgotPasswordLimiter, 
 
         saveToken();
 
-        const resetUrl = new URL("/", APP_BASE_URL);
-        resetUrl.searchParams.set("resetToken", token);
+        const resetUrl = new URL("/reset-password/" + token, APP_BASE_URL);
 
         await mailTransporter.sendMail({
             from: GMAIL_USER,
