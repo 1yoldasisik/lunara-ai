@@ -889,6 +889,7 @@ async function refreshMemberPanel() {
         document.getElementById("memberNewEmail").value = user.email || "";
         document.getElementById("memberBio").value = user.bio || "";
         document.getElementById("memberSummaryEmail").textContent = user.email || "";
+        renderMemberAvatar(user);
 
         if (typeof updateMemberUI === "function") {
             updateMemberUI(user);
@@ -920,6 +921,124 @@ async function refreshMemberPanel() {
         showMessage(error.message || "Uye paneli yuklenemedi.");
     }
 }
+
+function renderMemberAvatar(user = {}) {
+    const image = document.getElementById("memberAvatarImage");
+    const initials = document.getElementById("memberAvatarInitials");
+    if (!image || !initials) return;
+
+    const nameInitials = `${user.firstName || ""} ${user.lastName || ""}`
+        .trim().split(/\s+/).filter(Boolean).slice(0, 2)
+        .map(part => part.charAt(0).toLocaleUpperCase("tr-TR")).join("");
+
+    initials.textContent = nameInitials || "L";
+    if (user.avatarData) {
+        image.src = user.avatarData;
+        image.classList.remove("hidden");
+        initials.classList.add("hidden");
+    } else {
+        image.removeAttribute("src");
+        image.classList.add("hidden");
+        initials.classList.remove("hidden");
+    }
+}
+
+function resizeMemberAvatar(file) {
+    return new Promise((resolve, reject) => {
+        if (!file || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+            reject(new Error("JPG, PNG veya WebP formatında bir fotoğraf seçin."));
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            reject(new Error("Seçtiğiniz fotoğraf 5 MB sınırını aşıyor."));
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Fotoğraf okunamadı."));
+        reader.onload = () => {
+            const image = new Image();
+            image.onerror = () => reject(new Error("Seçilen dosya geçerli bir görsel değil."));
+            image.onload = () => {
+                const scale = Math.min(1, 512 / Math.max(image.width, image.height));
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.max(1, Math.round(image.width * scale));
+                canvas.height = Math.max(1, Math.round(image.height * scale));
+                const context = canvas.getContext("2d");
+                if (!context) {
+                    reject(new Error("Fotoğraf işlenemedi."));
+                    return;
+                }
+                context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                let dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+                let base64 = dataUrl.split(",")[1] || "";
+                if (Math.floor(base64.length * 3 / 4) > 512 * 1024) {
+                    dataUrl = canvas.toDataURL("image/jpeg", 0.62);
+                    base64 = dataUrl.split(",")[1] || "";
+                }
+                if (Math.floor(base64.length * 3 / 4) > 512 * 1024) {
+                    reject(new Error("Fotoğraf küçültülemedi. Daha küçük bir görsel seçin."));
+                    return;
+                }
+                resolve(dataUrl);
+            };
+            image.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+document.getElementById("memberAvatarForm")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const input = document.getElementById("memberAvatarFile");
+    const status = document.getElementById("memberAvatarStatus");
+    const file = input?.files?.[0];
+    if (!file) {
+        status.textContent = "Önce bir fotoğraf seçin.";
+        return;
+    }
+
+    try {
+        status.textContent = "Fotoğraf hazırlanıyor...";
+        const avatarData = await resizeMemberAvatar(file);
+        const result = await apiRequest("/api/member/avatar", {
+            method: "PUT",
+            body: JSON.stringify({ avatarData })
+        });
+        renderMemberAvatar({
+            firstName: document.getElementById("memberFirstName").value,
+            lastName: document.getElementById("memberLastName").value,
+            avatarData: result.avatarData
+        });
+        input.value = "";
+        status.textContent = result.message;
+        showMessage(result.message);
+    } catch (error) {
+        status.textContent = error.message || "Fotoğraf kaydedilemedi.";
+        showMessage(status.textContent);
+    }
+});
+
+document.getElementById("memberAvatarRemove")?.addEventListener("click", async () => {
+    const status = document.getElementById("memberAvatarStatus");
+    try {
+        const result = await apiRequest("/api/member/avatar", {
+            method: "PUT",
+            body: JSON.stringify({ avatarData: null })
+        });
+        renderMemberAvatar({
+            firstName: document.getElementById("memberFirstName").value,
+            lastName: document.getElementById("memberLastName").value,
+            avatarData: ""
+        });
+        document.getElementById("memberAvatarFile").value = "";
+        status.textContent = result.message;
+        showMessage(result.message);
+    } catch (error) {
+        status.textContent = error.message || "Fotoğraf kaldırılamadı.";
+        showMessage(status.textContent);
+    }
+});
 
 document.getElementById("memberProfileForm")?.addEventListener("submit", async event => {
     event.preventDefault();
