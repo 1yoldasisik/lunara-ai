@@ -910,9 +910,10 @@ async function refreshMemberPanel() {
     }
 
     try {
-        const [profileData, analysisData] = await Promise.all([
+        const [profileData, analysisData, notificationData] = await Promise.all([
             apiRequest("/api/member"),
-            apiRequest("/api/analyses")
+            apiRequest("/api/analyses"),
+            apiRequest("/api/member/notifications")
         ]);
 
         const user = profileData.user;
@@ -931,6 +932,8 @@ async function refreshMemberPanel() {
         if (typeof updateMemberUI === "function") {
             updateMemberUI(user);
         }
+
+        renderMemberNotifications(notificationData);
 
         const analyses = analysisData.analyses || [];
         window.lunaraMemberAnalyses = analyses;
@@ -957,6 +960,34 @@ async function refreshMemberPanel() {
         }
         showMessage(error.message || "Uye paneli yuklenemedi.");
     }
+}
+
+function renderMemberNotifications(data = {}) {
+    const box = document.getElementById("memberNotificationsList");
+    const count = document.getElementById("memberNotificationCount");
+    if (!box) return;
+    const notifications = Array.isArray(data.notifications) ? data.notifications : [];
+    const unreadCount = Number(data.unreadCount) || 0;
+    if (count) {
+        count.textContent = String(unreadCount);
+        count.classList.toggle("hidden", unreadCount === 0);
+    }
+    if (!notifications.length) {
+        box.innerHTML = '<p class="member-hint">Henüz bildiriminiz yok. Yeni analizleriniz ve hesap güvenliği gelişmeleri burada görünecek.</p>';
+        return;
+    }
+    box.innerHTML = notifications.map(item => `
+        <article class="member-notification ${item.isRead ? "is-read" : "is-unread"}">
+            <div class="member-notification-mark" aria-hidden="true">${item.type === "security" ? "◆" : item.type === "analysis" ? "✦" : "•"}</div>
+            <div class="member-notification-content">
+                <strong>${memberEscapeHTML(item.title)}</strong>
+                <p>${memberEscapeHTML(item.message)}</p>
+                <time>${memberEscapeHTML(memberDate(item.createdAt))}</time>
+            </div>
+            ${item.isRead ? '<span class="member-notification-state">Okundu</span>' :
+                `<button type="button" class="login-btn member-notification-read" data-notification-read="${Number(item.id)}">Okundu</button>`}
+        </article>
+    `).join("");
 }
 
 function renderMemberAvatar(user = {}) {
@@ -1212,6 +1243,16 @@ document.addEventListener("click", async event => {
         if (action.dataset.memberAction === "close") closeMemberPanel();
         if (action.dataset.memberAction === "refresh") refreshMemberPanel();
 
+        if (action.dataset.memberAction === "notifications-read-all") {
+            try {
+                await apiRequest("/api/member/notifications/read-all", { method: "POST" });
+                await refreshMemberPanel();
+                showMessage("Tüm bildirimler okundu olarak işaretlendi.");
+            } catch (error) {
+                showMessage(error.message || "Bildirimler güncellenemedi.");
+            }
+        }
+
         if (action.dataset.memberAction === "delete-all") {
             const analyses = window.lunaraMemberAnalyses || [];
 
@@ -1237,6 +1278,18 @@ document.addEventListener("click", async event => {
             } catch (error) {
                 showMessage(error.message || "Analiz gecmisi silinemedi.");
             }
+        }
+    }
+
+    const readNotification = event.target.closest("[data-notification-read]");
+    if (readNotification) {
+        const id = Number(readNotification.dataset.notificationRead);
+        if (!Number.isSafeInteger(id) || id < 1) return;
+        try {
+            await apiRequest("/api/member/notifications/" + id + "/read", { method: "POST" });
+            await refreshMemberPanel();
+        } catch (error) {
+            showMessage(error.message || "Bildirim okundu olarak işaretlenemedi.");
         }
     }
 
