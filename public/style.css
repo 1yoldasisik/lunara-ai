@@ -770,3 +770,34 @@ button { cursor: pointer; }
 @media(max-width:650px) {
     .admin-analysis-detail-heading { flex-direction: column; }
 }
+
+
+/* Üyelik ve hesap durumu ayarları */
+.account-action-panel {
+    margin-top: 16px;
+    padding: 18px;
+    border: 1px solid rgba(217,182,111,.22);
+    border-radius: 10px;
+    background: rgba(255,255,255,.025);
+}
+.account-action-panel h4 {
+    margin: 0 0 8px;
+    color: var(--gold);
+}
+.account-danger-panel {
+    border-color: rgba(220,100,110,.35);
+}
+.account-danger-panel h4 {
+    color: #f0a0a8;
+}
+#reactivateAccountButton {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+}
+#reactivateAccountButton.hidden {
+    display: none;
+}
+@media (max-width: 650px) {
+    .account-action-panel { padding: 14px; }
+}
