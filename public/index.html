@@ -287,6 +287,16 @@
             <div><span class="member-label">Üyelik tarihi</span><strong id="memberCreatedAt">—</strong></div>
         </div>
 
+        <section class="member-section member-notifications-section">
+            <div class="member-section-heading">
+                <h3>Bildirimler <span id="memberNotificationCount" class="notification-count hidden">0</span></h3>
+                <button class="login-btn" type="button" data-member-action="notifications-read-all">Tümünü Okundu İşaretle</button>
+            </div>
+            <div id="memberNotificationsList" aria-live="polite">
+                <p class="member-hint">Bildirimler yükleniyor…</p>
+            </div>
+        </section>
+
         <section class="member-section">
             <h3>Profil fotoğrafım</h3>
             <div class="member-avatar-editor">
