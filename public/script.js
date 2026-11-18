@@ -996,16 +996,13 @@ document.addEventListener("click", (event) => {
 
 // E-posta bağlantısından gelen tek kullanımlık tokenı al.
 (() => {
+    const pathMatch = window.location.pathname.match(/^\/reset-password\/([a-f0-9]{64})\/?$/i);
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("resetToken");
+    const token = pathMatch ? pathMatch[1] : params.get("resetToken");
 
-    if (token) {
+    if (token && /^[a-f0-9]{64}$/i.test(token)) {
         pendingResetToken = token;
-        window.history.replaceState(
-            null,
-            "",
-            window.location.pathname + window.location.hash
-        );
+        window.history.replaceState(null, "", "/");
         openAuth("reset");
     }
 })();
