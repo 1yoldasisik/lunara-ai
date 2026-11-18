@@ -997,9 +997,18 @@ function anonymizeAnalysisText(value, personalValues) {
     for (const valueToRemove of personalValues) {
         const needle = String(valueToRemove || "").trim();
         if (needle.length < 2) continue;
-        result = result.split(needle).join("[anonim]");
+        const sourceLower = result.toLocaleLowerCase("tr-TR");
+        const needleLower = needle.toLocaleLowerCase("tr-TR");
+        let cursor = 0;
+        let index;
+        let anonymized = "";
+        while ((index = sourceLower.indexOf(needleLower, cursor)) !== -1) {
+            anonymized += result.slice(cursor, index) + "[anonim]";
+            cursor = index + needle.length;
+        }
+        if (cursor > 0) result = anonymized + result.slice(cursor);
     }
-    const emailPattern = new RegExp("[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", "gi");
+    const emailPattern = new RegExp("[A-Z0-9._%+-]+@[A-Z0-9.-]+\\\\.[A-Z]{2,}", "gi");
     return result.replace(emailPattern, "[anonim e-posta]");
 }
 
@@ -1063,7 +1072,8 @@ app.post("/api/member/delete-account", requireSameOrigin, requireLogin, async (r
             user.first_name,
             user.last_name,
             `${user.first_name} ${user.last_name}`,
-            user.birth_date
+            user.birth_date,
+            user.bio
         ];
 
         const randomEmail = `deleted-${user.id}-${crypto.randomBytes(12).toString("hex")}@deleted.invalid`;
