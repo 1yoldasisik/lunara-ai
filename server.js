@@ -791,7 +791,11 @@ app.post("/api/member/deactivate", requireSameOrigin, requireLogin, async (req, 
         if (!user || user.status !== "active" || !(await bcrypt.compare(password, user.password_hash))) {
             return res.status(401).json({ success: false, message: "Mevcut şifreniz hatalı." });
         }
-        db.prepare("UPDATE users SET status = 'inactive' WHERE id = ?").run(user.id);
+        const deactivateAccount = db.transaction(() => {
+            db.prepare("UPDATE users SET status = 'inactive' WHERE id = ?").run(user.id);
+            db.prepare("DELETE FROM password_reset_tokens WHERE user_id = ?").run(user.id);
+        });
+        deactivateAccount();
         destroyUserSessions(user.id);
         return req.session.destroy(() => {
             res.clearCookie("lunara.sid", { httpOnly: true, secure: IS_PRODUCTION, sameSite: "lax" });
@@ -943,8 +947,13 @@ app.put("/api/member/email", requireSameOrigin, requireLogin, async (req, res, n
             });
         }
 
-        db.prepare("UPDATE users SET email = ? WHERE id = ?")
-            .run(email, req.session.userId);
+        const updateEmail = db.transaction(() => {
+            db.prepare("UPDATE users SET email = ? WHERE id = ?")
+                .run(email, req.session.userId);
+            db.prepare("DELETE FROM password_reset_tokens WHERE user_id = ?")
+                .run(req.session.userId);
+        });
+        updateEmail();
 
         const updatedUser = db.prepare(`
             SELECT id, first_name, last_name, birth_date, email, bio,
@@ -1010,6 +1019,11 @@ app.post("/api/member/password", requireSameOrigin, requireLogin, async (req, re
             db.prepare(
                 "UPDATE users SET password_hash = ? WHERE id = ?"
             ).run(passwordHash, userId);
+
+            // Eski sıfırlama bağlantıları yeni şifreyi geçersiz kılamasın.
+            db.prepare(
+                "DELETE FROM password_reset_tokens WHERE user_id = ?"
+            ).run(userId);
 
             const sessions = db.prepare(
                 "SELECT sid, sess FROM sessions"
@@ -1268,7 +1282,7 @@ app.post("/api/auth/forgot-password", requireSameOrigin, forgotPasswordLimiter, 
     }
 
     const user = db.prepare(
-        "SELECT id, email FROM users WHERE email = ?"
+        "SELECT id, email FROM users WHERE email = ? AND status = 'active'"
     ).get(email);
 
     if (!user) {
@@ -1282,8 +1296,9 @@ app.post("/api/auth/forgot-password", requireSameOrigin, forgotPasswordLimiter, 
 
     try {
         const saveToken = db.transaction(() => {
+            // Her yeni talep, aynı hesaba ait önceki tüm bağlantıları geçersiz kılar.
             db.prepare(
-                "DELETE FROM password_reset_tokens WHERE user_id = ? AND used_at IS NULL"
+                "DELETE FROM password_reset_tokens WHERE user_id = ?"
             ).run(user.id);
 
             db.prepare(`
@@ -1367,11 +1382,13 @@ app.post("/api/auth/reset-password", requireSameOrigin, resetPasswordLimiter, as
 
         const resetPassword = db.transaction(() => {
             const resetRecord = db.prepare(`
-                SELECT user_id
-                FROM password_reset_tokens
-                WHERE token_hash = ?
-                  AND used_at IS NULL
-                  AND expires_at > ?
+                SELECT token.user_id
+                FROM password_reset_tokens AS token
+                INNER JOIN users AS account ON account.id = token.user_id
+                WHERE token.token_hash = ?
+                  AND token.used_at IS NULL
+                  AND token.expires_at > ?
+                  AND account.status = 'active'
             `).get(tokenHash, now);
 
             if (!resetRecord) return null;
