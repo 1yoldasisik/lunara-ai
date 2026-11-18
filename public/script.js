@@ -924,6 +924,8 @@ async function refreshMemberPanel() {
         document.getElementById("memberSummaryEmail").textContent = user.email || "";
         const accountStatus = document.getElementById("memberAccountStatus");
         if (accountStatus) accountStatus.textContent = user.status === "inactive" ? "Geçici olarak kapalı" : "Aktif";
+        const createdAt = document.getElementById("memberCreatedAt");
+        if (createdAt) createdAt.textContent = memberDate(user.createdAt);
         renderMemberAvatar(user);
 
         if (typeof updateMemberUI === "function") {
