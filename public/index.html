@@ -286,6 +286,26 @@
         </div>
 
         <section class="member-section">
+            <h3>Profil fotoğrafım</h3>
+            <div class="member-avatar-editor">
+                <div class="member-avatar-preview">
+                    <img id="memberAvatarImage" class="hidden" alt="Profil fotoğrafı">
+                    <span id="memberAvatarInitials">L</span>
+                </div>
+                <div class="member-avatar-controls">
+                    <form id="memberAvatarForm">
+                        <label for="memberAvatarFile">Fotoğraf seç</label>
+                        <input id="memberAvatarFile" type="file" accept="image/jpeg,image/png,image/webp">
+                        <p class="member-hint">JPG, PNG veya WebP. En fazla 5 MB. Fotoğraf sunucuda 512 KB altına küçültülür.</p>
+                        <button class="form-submit" type="submit">Fotoğrafı Kaydet</button>
+                    </form>
+                    <button class="member-delete-btn" id="memberAvatarRemove" type="button">Fotoğrafı Kaldır</button>
+                </div>
+            </div>
+            <p class="member-status" id="memberAvatarStatus" role="status"></p>
+        </section>
+
+        <section class="member-section">
             <h3>Profil bilgilerim</h3>
             <form id="memberProfileForm" class="member-form">
                 <label for="memberFirstName">Ad</label>
