@@ -38,7 +38,9 @@ async function apiRequest(url, options = {}) {
     }
 
     if (!response.ok) {
-        throw new Error(data.message || "Bir hata oluştu.");
+        const error = new Error(data.message || "Bir hata oluştu.");
+        error.data = data;
+        throw error;
     }
 
     return data;
