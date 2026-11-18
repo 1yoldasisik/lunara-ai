@@ -160,6 +160,7 @@
 
             <button class="text-link forgot-link" type="button" data-action="forgot-password">Şifremi Unuttum?</button>
             <button class="gold-btn form-submit" type="submit">Giriş Yap ✧</button>
+            <button id="reactivateAccountButton" class="text-link hidden" type="button">Hesabımı Yeniden Etkinleştir</button>
         </form>
 
         <form id="forgotPasswordForm" class="hidden">
@@ -282,7 +283,7 @@
 
         <div class="member-summary">
             <div><span class="member-label">E-posta</span><strong id="memberSummaryEmail">—</strong></div>
-            <div><span class="member-label">Hesap durumu</span><strong>Aktif</strong></div>
+            <div><span class="member-label">Hesap durumu</span><strong id="memberAccountStatus">Aktif</strong></div>
         </div>
 
         <section class="member-section">
@@ -357,6 +358,33 @@
                 </div>
             </div>
             <div id="memberAnalysisHistoryList"><p class="member-hint">Analiz geçmişin yükleniyor…</p></div>
+        </section>
+
+        <section class="member-section">
+            <h3>Üyelik ve hesap ayarları</h3>
+            <div class="account-action-panel">
+                <h4>Hesabı geçici olarak devre dışı bırak</h4>
+                <p class="member-hint">Hesabınızdan çıkış yapılır ve yeniden etkinleştirene kadar giriş yapamazsınız. Analiz geçmişiniz korunur.</p>
+                <form id="memberDeactivateForm" class="member-form">
+                    <label for="memberDeactivatePassword">Mevcut şifreniz</label>
+                    <input id="memberDeactivatePassword" type="password" autocomplete="current-password" required>
+                    <button class="member-delete-btn" type="submit">Hesabımı Geçici Olarak Kapat</button>
+                </form>
+                <p class="member-status" id="memberDeactivateStatus" role="status"></p>
+            </div>
+
+            <div class="account-action-panel account-danger-panel">
+                <h4>Hesabı kalıcı olarak sil</h4>
+                <p class="member-hint">Profil bilgileriniz ve fotoğrafınız silinir. Analiz geçmişiniz kişisel bilgilerden arındırılarak anonim biçimde korunur. Bu işlem geri alınamaz.</p>
+                <form id="memberDeleteAccountForm" class="member-form">
+                    <label for="memberDeletePassword">Mevcut şifreniz</label>
+                    <input id="memberDeletePassword" type="password" autocomplete="current-password" required>
+                    <label for="memberDeleteConfirmation">Onaylamak için SIL yazın</label>
+                    <input id="memberDeleteConfirmation" type="text" autocomplete="off" required pattern="SIL" title="Büyük harflerle SIL yazın">
+                    <button class="member-delete-btn" type="submit">Hesabımı Kalıcı Olarak Sil</button>
+                </form>
+                <p class="member-status" id="memberDeleteAccountStatus" role="status"></p>
+            </div>
         </section>
     </section>
 </div>
