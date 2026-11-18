@@ -564,7 +564,7 @@ app.get("/api/auth/me", (req, res) => {
 
     const user = db.prepare(`
         SELECT id, first_name, last_name, birth_date,
-               email, bio, credits, role, created_at
+               email, bio, credits, role, created_at, status
         FROM users WHERE id = ?
     `).get(req.session.userId);
 
@@ -999,7 +999,7 @@ function anonymizeAnalysisText(value, personalValues) {
         if (needle.length < 2) continue;
         result = result.split(needle).join("[anonim]");
     }
-    const emailPattern = new RegExp("[A-Z0-9._%+-]+@[A-Z0-9.-]+\\\\.[A-Z]{2,}", "gi");
+    const emailPattern = new RegExp("[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", "gi");
     return result.replace(emailPattern, "[anonim e-posta]");
 }
 
