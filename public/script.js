@@ -130,8 +130,38 @@ document.getElementById("loginForm").addEventListener("submit", async (event) =>
         closeAuth();
         showMessage(`Hoş geldin ${data.user.firstName}!`);
     } catch (error) {
+        const reactivateButton = document.getElementById("reactivateAccountButton");
+        if (reactivateButton) {
+            reactivateButton.classList.toggle("hidden", error.data?.code !== "ACCOUNT_DISABLED");
+        }
         showMessage(error.message);
     }
+});
+
+document.getElementById("reactivateAccountButton")?.addEventListener("click", async () => {
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    if (!email || !password) {
+        showMessage("Yeniden etkinleştirmek için e-posta adresinizi ve şifrenizi girin.");
+        return;
+    }
+    try {
+        const result = await apiRequest("/api/auth/reactivate", {
+            method: "POST",
+            body: JSON.stringify({ email, password })
+        });
+        updateMemberUI(result.user);
+        document.getElementById("loginForm").reset();
+        document.getElementById("reactivateAccountButton").classList.add("hidden");
+        closeAuth();
+        showMessage(result.message);
+    } catch (error) {
+        showMessage(error.message || "Hesap yeniden etkinleştirilemedi.");
+    }
+});
+
+document.getElementById("loginEmail")?.addEventListener("input", () => {
+    document.getElementById("reactivateAccountButton")?.classList.add("hidden");
 });
 
 document.getElementById("registerForm").addEventListener("submit", async (event) => {
@@ -671,6 +701,8 @@ async function refreshMemberPanel() {
         document.getElementById("memberNewEmail").value = user.email || "";
         document.getElementById("memberBio").value = user.bio || "";
         document.getElementById("memberSummaryEmail").textContent = user.email || "";
+        const accountStatus = document.getElementById("memberAccountStatus");
+        if (accountStatus) accountStatus.textContent = user.status === "inactive" ? "Geçici olarak kapalı" : "Aktif";
 
         if (typeof updateMemberUI === "function") {
             updateMemberUI(user);
@@ -843,6 +875,48 @@ document.addEventListener("click", async event => {
         } catch (error) {
             showMessage(error.message || "Analiz silinemedi.");
         }
+    }
+});
+
+
+document.getElementById("memberDeactivateForm")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!window.confirm("Hesabınızı geçici olarak devre dışı bırakmak istiyor musunuz? Daha sonra giriş ekranından yeniden etkinleştirebilirsiniz.")) return;
+    const status = document.getElementById("memberDeactivateStatus");
+    const password = document.getElementById("memberDeactivatePassword").value;
+    try {
+        const result = await apiRequest("/api/member/deactivate", { method: "POST", body: JSON.stringify({ password }) });
+        status.textContent = result.message;
+        updateMemberUI(null);
+        closeMemberPanel();
+        openAuth("login");
+        showMessage(result.message);
+    } catch (error) {
+        status.textContent = error.message || "Hesap kapatılamadı.";
+        showMessage(status.textContent);
+    }
+});
+
+document.getElementById("memberDeleteAccountForm")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const confirmation = document.getElementById("memberDeleteConfirmation").value.trim();
+    if (confirmation !== "SIL") {
+        showMessage("Kalıcı silme için onay alanına SIL yazın.");
+        return;
+    }
+    if (!window.confirm("SON UYARI: Hesabınız ve kişisel bilgileriniz silinecek. Analiz kayıtları anonimleştirilerek korunacak. Bu işlem geri alınamaz. Devam etmek istiyor musunuz?")) return;
+    const status = document.getElementById("memberDeleteAccountStatus");
+    const password = document.getElementById("memberDeletePassword").value;
+    try {
+        const result = await apiRequest("/api/member/delete-account", { method: "POST", body: JSON.stringify({ password, confirmation }) });
+        status.textContent = result.message;
+        updateMemberUI(null);
+        closeMemberPanel();
+        openAuth("login");
+        showMessage(result.message);
+    } catch (error) {
+        status.textContent = error.message || "Hesap silinemedi.";
+        showMessage(status.textContent);
     }
 });
 
