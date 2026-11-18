@@ -140,6 +140,20 @@ if (!userColumns.some(column => column.name === "avatar_data")) {
 if (!userColumns.some(column => column.name === "status")) {
     db.exec("ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
 }
+db.exec(`
+    CREATE TABLE IF NOT EXISTS member_notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        type TEXT NOT NULL DEFAULT 'info',
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        is_read INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_member_notifications_user
+    ON member_notifications(user_id, is_read, id DESC);
+`);
 
 class SQLiteSessionStore extends session.Store {
     get(sid, callback) {
@@ -534,6 +548,14 @@ function publicUser(user) {
     };
 }
 
+function createMemberNotification(userId, type, title, message) {
+    db.prepare(`
+        INSERT INTO member_notifications (user_id, type, title, message)
+        VALUES (?, ?, ?, ?)
+    `).run(Number(userId), String(type || "info").slice(0, 24),
+        String(title || "Lunara bildirimi").slice(0, 120), String(message || "").slice(0, 500));
+}
+
 function regenerateSession(req, userId) {
     return new Promise((resolve, reject) => {
         req.session.regenerate((error) => {
@@ -672,6 +694,8 @@ app.post("/api/auth/register", requireSameOrigin, registerLimiter, async (req, r
         }
 
         await regenerateSession(req, userId);
+        createMemberNotification(userId, "success", "Lunara'ya hoş geldiniz",
+            "Üyeliğiniz oluşturuldu. Yeni analizleriniz ve hesap güvenliği gelişmeleri burada görünecek.");
 
         const user = db.prepare(`
             SELECT id, first_name, last_name, birth_date,
@@ -787,6 +811,38 @@ app.post("/api/auth/logout", requireSameOrigin, (req, res) => {
             message: "Güvenli çıkış yapıldı."
         });
     });
+});
+
+app.get("/api/member/notifications", requireLogin, (req, res) => {
+    const notifications = db.prepare(`
+        SELECT id, type, title, message, is_read, created_at
+        FROM member_notifications WHERE user_id = ? ORDER BY id DESC LIMIT 50
+    `).all(req.session.userId);
+    const unreadCount = db.prepare(`
+        SELECT COUNT(*) AS count FROM member_notifications WHERE user_id = ? AND is_read = 0
+    `).get(req.session.userId).count;
+    res.json({ success: true, unreadCount, notifications: notifications.map(item => ({
+        id: item.id, type: item.type, title: item.title, message: item.message,
+        isRead: Boolean(item.is_read), createdAt: item.created_at
+    })) });
+});
+
+app.post("/api/member/notifications/:id/read", requireSameOrigin, requireLogin, (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isSafeInteger(id) || id < 1)
+        return res.status(400).json({ success: false, message: "Geçersiz bildirim numarası." });
+    const result = db.prepare(`
+        UPDATE member_notifications SET is_read = 1 WHERE id = ? AND user_id = ?
+    `).run(id, req.session.userId);
+    if (!result.changes) return res.status(404).json({ success: false, message: "Bildirim bulunamadı." });
+    res.json({ success: true, message: "Bildirim okundu olarak işaretlendi." });
+});
+
+app.post("/api/member/notifications/read-all", requireSameOrigin, requireLogin, (req, res) => {
+    const result = db.prepare(`
+        UPDATE member_notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0
+    `).run(req.session.userId);
+    res.json({ success: true, updatedCount: result.changes });
 });
 
 app.get("/api/member", requireLogin, (req, res) => {
@@ -955,6 +1011,8 @@ app.put("/api/member/email", requireSameOrigin, requireLogin, async (req, res, n
 
         db.prepare("UPDATE users SET email = ? WHERE id = ?")
             .run(email, req.session.userId);
+        createMemberNotification(req.session.userId, "security", "E-posta adresiniz değiştirildi",
+            "Lunara hesabınızın e-posta adresi başarıyla güncellendi.");
 
         const updatedUser = db.prepare(`
             SELECT id, first_name, last_name, birth_date, email, bio,
@@ -1101,6 +1159,7 @@ app.post("/api/member/delete-account", requireSameOrigin, requireLogin, async (r
 
             db.prepare("DELETE FROM credit_transactions WHERE user_id = ?").run(user.id);
             db.prepare("DELETE FROM password_reset_tokens WHERE user_id = ?").run(user.id);
+            db.prepare("DELETE FROM member_notifications WHERE user_id = ?").run(user.id);
             db.prepare(`
                 UPDATE users
                 SET first_name = 'Silinmiş',
@@ -1200,6 +1259,8 @@ app.post("/api/member/password", requireSameOrigin, requireLogin, async (req, re
         });
 
         updatePasswordAndRevokeSessions();
+        createMemberNotification(userId, "security", "Şifreniz değiştirildi",
+            "Hesap şifreniz güncellendi. Güvenlik nedeniyle diğer oturumlar kapatıldı.");
 
         return req.session.destroy((error) => {
             res.clearCookie("lunara.sid", {
@@ -1287,6 +1348,8 @@ app.post("/api/analyses", requireSameOrigin, requireLogin, analysisLimiter, asyn
             (user_id, analysis_type, title, question, content, credits_spent)
             VALUES (?, ?, ?, ?, ?, 0)
         `).run(req.session.userId, type, config.title, question, content);
+        createMemberNotification(req.session.userId, "analysis", "Analiziniz hazır",
+            config.title + " tamamlandı ve analiz geçmişinize kaydedildi.");
 
         res.json({
             success: true,
