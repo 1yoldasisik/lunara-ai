@@ -296,7 +296,7 @@ const ANALYSIS_TYPES = {
     horoscope: { title: "Burç Yorumu" },
     numerology: { title: "Numeroloji Analizi" },
     love: { title: "Aşk ve İlişki Analizi" },
-    personal: { title: "Kişisel Analiz" }
+    personal: { title: "Kişisel Analiz" },\n    generalfortune: { title: "Genel Fal" },\n    birthchart: { title: "Doğum Haritası" }
 };
 
 async function generateGeminiAnalysis(prompt, image) {
