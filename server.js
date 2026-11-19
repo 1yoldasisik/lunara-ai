@@ -1171,7 +1171,7 @@ app.post("/api/analyses", requireSameOrigin, requireLogin, analysisLimiter, asyn
             const focusMap = { "self-awareness": "Kendini tanıma ve karakter", strengths: "Güçlü yönler ve potansiyel", decisions: "Kararlar ve yön belirleme", motivation: "Motivasyon ve alışkanlıklar", "life-balance": "Yaşam dengesi" };
             if (!Object.hasOwn(focusMap, focus)) return res.status(400).json({ success: false, message: "Geçerli kişisel analiz odağı seçin." });
             prompt = `Lunara için ${focusMap[focus]} odaklı kişisel farkındalık analizi hazırla. Yalnızca kullanıcı tarafından paylaşılan bağlamı kullan; kişilik özelliklerini kesin gerçek olarak varsayma. Bu modülün odağına bağlı kal, diğer modüllerin menü ve promptlarını tekrar etme. 4-5 yapılandırılmış başlık, dengeli değerlendirme ve uygulanabilir öneriler sun. Premium ve kendinden emin anlatım kullan. Kullanıcının paylaştığı bilgi ve sorusu: ${question || "Ek bilgi yok"}.`;
-        }  }
+        }
 
         const content = await generateGeminiAnalysis(prompt, image);
 
