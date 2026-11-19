@@ -901,3 +901,26 @@ button { cursor: pointer; }
     .about-page-content h1 { font-size: 43px; }
     .about-page-content .about-copy { font-size: 13px; line-height: 1.85; }
 }
+
+
+/* LUNARA_CONTACT_PAGE_20261119 */
+.contact-page-content {
+    width: min(820px, 100%);
+}
+.contact-page-content h1 {
+    margin-bottom: 18px;
+}
+.contact-page-content .about-copy {
+    max-width: 660px;
+}
+.contact-note {
+    max-width: 620px;
+    margin: 28px auto 0;
+    padding: 18px 22px;
+    border: 1px solid rgba(217,182,111,.2);
+    border-radius: 8px;
+    background: rgba(255,255,255,.025);
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.8;
+}
