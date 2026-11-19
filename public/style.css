@@ -901,3 +901,77 @@ button { cursor: pointer; }
     .about-page-content h1 { font-size: 43px; }
     .about-page-content .about-copy { font-size: 13px; line-height: 1.85; }
 }
+
+
+/* LUNARA_CONTACT_PAGE_20261119 */
+.contact-page-content {
+    width: min(820px, 100%);
+}
+.contact-page-content h1 {
+    margin-bottom: 18px;
+}
+.contact-page-content .about-copy {
+    max-width: 660px;
+}
+.contact-note {
+    max-width: 620px;
+    margin: 28px auto 0;
+    padding: 18px 22px;
+    border: 1px solid rgba(217,182,111,.2);
+    border-radius: 8px;
+    background: rgba(255,255,255,.025);
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+
+/* LUNARA_CONTACT_FORM_20261119 */
+.contact-form {
+    max-width: 620px;
+    margin: 28px auto 0;
+    display: grid;
+    gap: 9px;
+    text-align: left;
+}
+.contact-form label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 7px;
+}
+.contact-form input,
+.contact-form textarea {
+    width: 100%;
+    min-width: 0;
+    padding: 13px 14px;
+    border: 1px solid rgba(217,182,111,.25);
+    border-radius: 7px;
+    outline: none;
+    background: rgba(10,6,17,.75);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+}
+.contact-form textarea {
+    resize: vertical;
+    min-height: 140px;
+    line-height: 1.7;
+}
+.contact-form input:focus,
+.contact-form textarea:focus { border-color: var(--gold); }
+.contact-form .form-submit { width: 100%; margin-top: 12px; }
+.contact-status {
+    min-height: 20px;
+    color: var(--gold);
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.6;
+}
+.contact-status.error { color: #f0a0a8; }
+.contact-honeypot {
+    position: absolute !important;
+    left: -10000px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+}

@@ -258,6 +258,17 @@ const forgotPasswordLimiter = rateLimit({
     }
 });
 
+const contactLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        success: false,
+        message: "Çok fazla mesaj gönderdiniz. Lütfen bir saat sonra tekrar deneyin."
+    }
+});
+
 const resetPasswordLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 5,
@@ -1250,6 +1261,71 @@ app.get("/api/admin/audit", requireAdmin, (req, res) => {
     `).all();
 
     res.json({ success: true, audit: rows });
+});
+
+app.post("/api/contact", requireSameOrigin, contactLimiter, async (req, res) => {
+    if (!mailTransporter) {
+        return res.status(503).json({
+            success: false,
+            message: "İletişim hizmeti şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin."
+        });
+    }
+
+    const name = String(req.body?.name || "").replace(/[\r\n]+/g, " ").trim();
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const subject = String(req.body?.subject || "").replace(/[\r\n]+/g, " ").trim();
+    const message = String(req.body?.message || "").trim();
+    const honeypot = String(req.body?.website || "").trim();
+
+    // Bot tuzağı: otomatik doldurulan gizli alan doluysa mesajı kabul edilmiş gibi yanıtla.
+    if (honeypot) {
+        return res.json({
+            success: true,
+            message: "Mesajınız alındı. Teşekkür ederiz."
+        });
+    }
+
+    if (
+        name.length < 2 || name.length > 80 ||
+        email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
+        subject.length < 3 || subject.length > 120 ||
+        message.length < 10 || message.length > 5000
+    ) {
+        return res.status(400).json({
+            success: false,
+            message: "Lütfen tüm alanları doğru doldurun. Mesajınız 10–5000 karakter olmalıdır."
+        });
+    }
+
+    try {
+        await mailTransporter.sendMail({
+            from: GMAIL_USER,
+            to: "yoldas.isik@gmail.com",
+            replyTo: { name, address: email },
+            subject: "[Lunara İletişim] " + subject,
+            text: [
+                "Lunara iletişim formundan yeni mesaj geldi.",
+                "",
+                "Gönderen: " + name,
+                "E-posta: " + email,
+                "Konu: " + subject,
+                "",
+                "Mesaj:",
+                message
+            ].join("\n")
+        });
+
+        return res.json({
+            success: true,
+            message: "Mesajınız başarıyla gönderildi. En kısa sürede sizinle iletişime geçeceğiz."
+        });
+    } catch (error) {
+        console.error("İletişim mesajı e-postası gönderilemedi.");
+        return res.status(503).json({
+            success: false,
+            message: "Mesaj şu anda gönderilemedi. Lütfen daha sonra tekrar deneyin."
+        });
+    }
 });
 
 app.post("/api/auth/forgot-password", requireSameOrigin, forgotPasswordLimiter, async (req, res) => {
