@@ -37,7 +37,10 @@ if (GMAIL_USER && GMAIL_APP_PASSWORD) {
         auth: {
             user: GMAIL_USER,
             pass: GMAIL_APP_PASSWORD
-        }
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000
     });
 }
 console.log('[GEMINI KONTROL]', GEMINI_API_KEY.trim() ? 'ANAHTAR YUKLENDI' : 'ANAHTAR YOK');
@@ -124,6 +127,23 @@ db.exec(`
 
     CREATE INDEX IF NOT EXISTS idx_admin_audit_created
     ON admin_audit(created_at);
+
+    CREATE TABLE IF NOT EXISTS contact_mail_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        message TEXT NOT NULL,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'pending',
+        next_attempt_at INTEGER NOT NULL DEFAULT 0,
+        last_error TEXT,
+        sent_at INTEGER,
+        created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_contact_mail_queue_pending
+    ON contact_mail_queue(status, next_attempt_at, id);
 `);
 
 const analysisColumns = db.prepare("PRAGMA table_info(analyses)").all();
@@ -1263,7 +1283,102 @@ app.get("/api/admin/audit", requireAdmin, (req, res) => {
     res.json({ success: true, audit: rows });
 });
 
-app.post("/api/contact", requireSameOrigin, contactLimiter, async (req, res) => {
+let contactQueueRunning = false;
+const CONTACT_RETRY_DELAYS = [
+    60 * 1000,
+    5 * 60 * 1000,
+    15 * 60 * 1000,
+    60 * 60 * 1000,
+    6 * 60 * 60 * 1000,
+    24 * 60 * 60 * 1000,
+    24 * 60 * 60 * 1000
+];
+
+async function processContactMailQueue() {
+    if (!mailTransporter || contactQueueRunning) return;
+    contactQueueRunning = true;
+
+    try {
+        while (true) {
+            const job = db.prepare(`
+                SELECT id, name, email, subject, message, attempts
+                FROM contact_mail_queue
+                WHERE status = 'pending' AND next_attempt_at <= ?
+                ORDER BY id ASC
+                LIMIT 1
+            `).get(Date.now());
+
+            if (!job) break;
+
+            const attempt = job.attempts + 1;
+            const claimed = db.prepare(`
+                UPDATE contact_mail_queue
+                SET status = 'sending', attempts = ?
+                WHERE id = ? AND status = 'pending'
+            `).run(attempt, job.id);
+
+            if (!claimed.changes) continue;
+
+            try {
+                await mailTransporter.sendMail({
+                    from: GMAIL_USER,
+                    to: "yoldas.isik@gmail.com",
+                    replyTo: { name: job.name, address: job.email },
+                    subject: "[Lunara İletişim] " + job.subject,
+                    text: [
+                        "Lunara iletişim formundan yeni mesaj geldi.",
+                        "",
+                        "Gönderen: " + job.name,
+                        "E-posta: " + job.email,
+                        "Konu: " + job.subject,
+                        "",
+                        "Mesaj:",
+                        job.message
+                    ].join("\n")
+                });
+
+                db.prepare(`
+                    UPDATE contact_mail_queue
+                    SET status = 'sent', sent_at = ?, last_error = NULL
+                    WHERE id = ?
+                `).run(Date.now(), job.id);
+                console.log("[CONTACT] E-posta gönderildi. Mesaj ID:", job.id);
+            } catch (error) {
+                const retry = attempt < 8;
+                const delay = CONTACT_RETRY_DELAYS[Math.min(attempt - 1, CONTACT_RETRY_DELAYS.length - 1)];
+                db.prepare(`
+                    UPDATE contact_mail_queue
+                    SET status = ?, next_attempt_at = ?, last_error = ?
+                    WHERE id = ?
+                `).run(
+                    retry ? "pending" : "failed",
+                    retry ? Date.now() + delay : 0,
+                    String(error.message || "E-posta gönderim hatası").slice(0, 300),
+                    job.id
+                );
+                console.error(
+                    "[CONTACT] E-posta gönderilemedi. Mesaj ID:",
+                    job.id,
+                    "Deneme:",
+                    attempt,
+                    retry ? "Yeniden denenecek." : "Otomatik deneme sınırına ulaşıldı."
+                );
+            }
+        }
+    } catch (error) {
+        console.error("[CONTACT] Kuyruk işleyicisi hatası:", error.message);
+    } finally {
+        contactQueueRunning = false;
+    }
+}
+
+// Sunucu yeniden başlarsa yarım kalan gönderimleri tekrar kuyruğa al.
+db.prepare("UPDATE contact_mail_queue SET status = 'pending' WHERE status = 'sending'").run();
+setInterval(() => {
+    processContactMailQueue();
+}, 30000).unref();
+
+app.post("/api/contact", requireSameOrigin, contactLimiter, (req, res) => {
     if (!mailTransporter) {
         return res.status(503).json({
             success: false,
@@ -1277,7 +1392,6 @@ app.post("/api/contact", requireSameOrigin, contactLimiter, async (req, res) => 
     const message = String(req.body?.message || "").trim();
     const honeypot = String(req.body?.website || "").trim();
 
-    // Bot tuzağı: otomatik doldurulan gizli alan doluysa mesajı kabul edilmiş gibi yanıtla.
     if (honeypot) {
         return res.json({
             success: true,
@@ -1298,32 +1412,25 @@ app.post("/api/contact", requireSameOrigin, contactLimiter, async (req, res) => 
     }
 
     try {
-        await mailTransporter.sendMail({
-            from: GMAIL_USER,
-            to: "yoldas.isik@gmail.com",
-            replyTo: { name, address: email },
-            subject: "[Lunara İletişim] " + subject,
-            text: [
-                "Lunara iletişim formundan yeni mesaj geldi.",
-                "",
-                "Gönderen: " + name,
-                "E-posta: " + email,
-                "Konu: " + subject,
-                "",
-                "Mesaj:",
-                message
-            ].join("\n")
+        const saved = db.prepare(`
+            INSERT INTO contact_mail_queue (name, email, subject, message)
+            VALUES (?, ?, ?, ?)
+        `).run(name, email, subject, message);
+
+        res.status(202).json({
+            success: true,
+            message: "Mesajınız alındı. En kısa sürede sizinle iletişime geçeceğiz."
         });
 
-        return res.json({
-            success: true,
-            message: "Mesajınız başarıyla gönderildi. En kısa sürede sizinle iletişime geçeceğiz."
+        setImmediate(() => {
+            console.log("[CONTACT] Yeni mesaj kuyruğa alındı. Mesaj ID:", Number(saved.lastInsertRowid));
+            processContactMailQueue();
         });
     } catch (error) {
-        console.error("İletişim mesajı e-postası gönderilemedi.");
-        return res.status(503).json({
+        console.error("[CONTACT] Mesaj kuyruğa kaydedilemedi:", error.message);
+        return res.status(500).json({
             success: false,
-            message: "Mesaj şu anda gönderilemedi. Lütfen daha sonra tekrar deneyin."
+            message: "Mesajınız şu anda kaydedilemedi. Lütfen tekrar deneyin."
         });
     }
 });
