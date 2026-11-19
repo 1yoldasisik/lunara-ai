@@ -291,11 +291,13 @@ function openFeature(featureName) {
     if (normalized.includes("tarot")) type = "tarot";
     else if (normalized.includes("kahve")) type = "coffee";
     else if (normalized.includes("burç")) type = "horoscope";
+    else if (normalized.includes("numeroloji")) type = "numerology";
 
     const titles = {
         tarot: "Tarot Falı",
         coffee: "Kahve Falı",
         horoscope: "Burç Yorumu",
+        numerology: "Numeroloji Analizi",
         personal: featureName === "Doğum Haritası" ? "Doğum Haritası Yorumu" :
             featureName === "Aşk Falı" ? "Aşk ve İlişki Analizi" :
             featureName === "Numeroloji" ? "Numeroloji Analizi" :
@@ -308,7 +310,7 @@ function openFeature(featureName) {
     if (type === "personal") document.getElementById("analysisTitle").textContent = titles.personal;
     document.getElementById("analysisDescription").textContent =
         "Gemini yapay zekâsı ile hazırlanan sana özel sembolik yorum.";
-    ["tarot", "coffee", "horoscope", "personal"].forEach(name => {
+    ["tarot", "coffee", "horoscope", "personal", "numerology"].forEach(name => {
         document.getElementById(name + "Fields").classList.toggle("hidden", name !== type);
     });
     document.getElementById("analysisForm").classList.remove("hidden");
@@ -392,6 +394,13 @@ document.getElementById("analysisForm").addEventListener("submit", async event =
         details.period = document.getElementById("horoscopePeriod").value;
         question = document.getElementById("horoscopeQuestion").value.trim();
         if (!details.sign) return showMessage("Lütfen burcunu seç.");
+    } else if (type === "numerology") {
+        details.fullName = document.getElementById("numerologyFullName").value.trim();
+        details.birthDate = document.getElementById("numerologyBirthDate").value;
+        details.focus = document.getElementById("numerologyFocus").value;
+        if (details.fullName.length < 2) return showMessage("Lütfen doğumda verilen tam adını ve soyadını yaz.");
+        if (!details.birthDate) return showMessage("Lütfen doğum tarihini seç.");
+        question = "Kişisel numeroloji hesaplaması";
     } else {
         details.focus = document.getElementById("personalFocus").value;
         question = document.getElementById("personalQuestion").value.trim();
