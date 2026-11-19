@@ -321,7 +321,7 @@ async function generateGeminiAnalysis(prompt, image) {
     const timeoutMs = 30000;
     let lastFailure = null;
 
-    const systemInstruction = "Sen Lunara AI adlı Türkçe spiritüel keşif platformunun deneyimli, dikkatli ve yaratıcı yorumcususun. Daima Türkçe yanıt ver. Üslubun zarif, mistik, empatik ama ölçülü olsun. Yanıtları başlıklarla, anlaşılır ve ayrıntılı yaz. Tarot, kahve falı ve astrolojiyi sembolik/eğlence amaçlı yorumla; kesin gelecek iddiasında bulunma. Sağlık, hukuk, finans gibi önemli konularda kesin tavsiye verme. Kullanıcıyı korkutma, bağımlı kılma veya kesin sonuç vaat etme. Görselde seçilemeyen ayrıntıları uydurma; belirsizliği açıkça belirt.";
+    const systemInstruction = "Sen Lunara adlı premium Türkçe spiritüel keşif platformunun deneyimli içerik ve yorum asistanısın. Daima akıcı, özenli ve doğal Türkçe kullan. Marka sesin zarif, gizemli, profesyonel, güven veren ve ölçülüdür; kullanıcıya değer veren, küçümsemeyen bir hitap benimse. Kendini sıradan bir fal sitesi gibi değil, astroloji, tarot ve spiritüel sembolizmden ilham alan modern bir kişisel keşif deneyimi olarak ifade et. Yanıtları anlamlı başlıklarla, akıcı ve yeterli ayrıntıyla sun; klişe, laubali, küçümseyici veya deneyimi değersizleştiren ifadelerden kaçın. Sembolleri ve astrolojik temaları yorumla; geleceğe ilişkin kesinlik, garanti veya değişmez kader iddiasında bulunma. Sağlık, hukuk ve finans gibi önemli konularda profesyonel tavsiye verme; yorumların bu alanlarda karar yerine geçmediğini gerektiğinde zarifçe belirt. Kullanıcıyı korkutma, bağımlı kılma veya kesin sonuç vaat etme. Görselde seçilemeyen ayrıntıları uydurma; belirsizliği açıkça belirt.";
 
     for (let index = 0; index < modelCandidates.length; index++) {
         const model = modelCandidates[index];
@@ -1101,7 +1101,7 @@ app.post("/api/analyses", requireSameOrigin, requireLogin, analysisLimiter, asyn
             const spreadName = ({ one: "Tek kart", three: "Üç kart (geçmiş-şimdi-olasılık)", love: "Aşk açılımı", celtic: "Kelt haçı" })[spread] || "Üç kart";
             prompt = `Lunara üyesi için ${spreadName} tarot açılımı hazırla. Kartları sembolik olarak sen seç. Her kartın adını, temel sembolizmini ve soruyla bağlantısını açıkla. Sonunda genel tema, üzerinde düşünebileceği noktalar ve olumlu/gerçekçi bir kapanış ver. Kullanıcının sorusu: ${question || "Genel yaşam yolculuğu"}`;
         } else if (type === "coffee") {
-            prompt = `Bu fotoğraftaki Türk kahvesi fincanı ve telve izlerini dikkatle incele. Görülebilen şekilleri, fincanın bölümlerini ve sembolik çağrışımlarını birbirinden ayır. En az 4 başlıkla (genel enerji, yakın dönem, ilişkiler, iş/kişisel hedefler) ayrıntılı ama eğlence amaçlı bir kahve falı yorumu yaz. Görselde net olmayan şeyi kesinmiş gibi söyleme. Kullanıcının ek notu: ${question || "Ek not yok"}`;
+            prompt = `Bu fotoğraftaki Türk kahvesi fincanı ve telve izlerini dikkatle incele. Görülebilen şekilleri, fincanın bölümlerini ve sembolik çağrışımlarını birbirinden ayır. En az 4 başlıkla (genel enerji, yakın dönem, ilişkiler, iş/kişisel hedefler) Lunara'nın zarif, profesyonel ve gizemli marka diliyle ayrıntılı, sembolik bir kahve falı yorumu yaz. Görselde net olmayan şeyi kesinmiş gibi söyleme. Kullanıcının ek notu: ${question || "Ek not yok"}`;
         } else if (type === "horoscope") {
             const sign = String(details.sign || "").slice(0, 30);
             const period = String(details.period || "daily");
