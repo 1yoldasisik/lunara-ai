@@ -288,7 +288,9 @@ function openFeature(featureName) {
 
     const normalized = String(featureName).toLocaleLowerCase("tr-TR");
     let type = "personal";
-    if (normalized.includes("tarot")) type = "tarot";
+    if (normalized.includes("doğum haritası")) type = "birthchart";
+    else if (normalized.includes("genel fal")) type = "generalfortune";
+    else if (normalized.includes("tarot")) type = "tarot";
     else if (normalized.includes("kahve")) type = "coffee";
     else if (normalized.includes("burç")) type = "horoscope";
     else if (normalized.includes("numeroloji")) type = "numerology";
@@ -300,10 +302,7 @@ function openFeature(featureName) {
         horoscope: "Burç Yorumu",
         numerology: "Numeroloji Analizi",
         love: "Aşk ve İlişki Analizi",
-        personal: featureName === "Doğum Haritası" ? "Doğum Haritası Yorumu" :
-            featureName === "Aşk Falı" ? "Aşk ve İlişki Analizi" :
-            featureName === "Numeroloji" ? "Numeroloji Analizi" :
-            featureName === "Genel Fal" ? "Genel Yaşam Yorumu" : "Kişisel Analiz"
+        personal: "Kişisel Analiz"
     };
 
     document.getElementById("analysisForm").reset();
@@ -315,7 +314,7 @@ function openFeature(featureName) {
         : type === "numerology"
         ? "Önce kişisel sayıların matematiksel olarak hesaplanır, ardından sembolik anlamları yorumlanır."
         : "Gemini yapay zekâsı ile hazırlanan sana özel sembolik yorum.";
-    ["tarot", "coffee", "horoscope", "personal", "numerology", "love"].forEach(name => {
+    ["tarot", "coffee", "horoscope", "personal", "numerology", "love", "generalFortune", "birthChart"].forEach(name => {
         document.getElementById(name + "Fields").classList.toggle("hidden", name !== type);
     });
     document.getElementById("analysisForm").classList.remove("hidden");
