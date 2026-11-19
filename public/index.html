@@ -429,16 +429,49 @@
             </div>
 
             <div class="analysis-fields hidden" id="personalFields">
-                <label for="personalFocus">Analiz konusu</label>
+                <label for="personalFocus">Analiz odağı</label>
                 <select id="personalFocus">
-                    <option>Genel yaşam</option>
-                    <option>Aşk ve ilişkiler</option>
-                    <option>Kariyer ve hedefler</option>
-                    <option>Kişisel gelişim</option>
-                    <option>İçsel denge ve motivasyon</option>
+                    <option value="self-awareness">Kendini tanıma ve karakter</option>
+                    <option value="strengths">Güçlü yönler ve potansiyel</option>
+                    <option value="decisions">Kararlar ve yön belirleme</option>
+                    <option value="motivation">Motivasyon ve alışkanlıklar</option>
+                    <option value="life-balance">Yaşam dengesi</option>
                 </select>
-                <label for="personalQuestion">Kendin hakkında paylaşmak istediklerin</label>
-                <textarea id="personalQuestion" rows="5" maxlength="1200" placeholder="Sorunu, hedefini veya üzerinde düşündüğün konuyu anlat..."></textarea>
+                <label for="personalQuestion">Paylaşmak istediğin konu</label>
+                <textarea id="personalQuestion" rows="5" maxlength="1200" placeholder="Kendini, hedefini veya üzerinde düşündüğün konuyu anlat..."></textarea>
+            </div>
+
+            <div class="analysis-fields hidden" id="generalFortuneFields">
+                <label for="generalFortuneFocus">Genel falın odak alanı</label>
+                <select id="generalFortuneFocus">
+                    <option value="overall">Genel enerji ve yaşam akışı</option>
+                    <option value="opportunities">Fırsatlar ve yeni başlangıçlar</option>
+                    <option value="work">İş ve maddi konular</option>
+                    <option value="social">Sosyal çevre ve iletişim</option>
+                    <option value="nearFuture">Yakın dönem temaları</option>
+                </select>
+                <label for="generalFortuneQuestion">Ek soru (isteğe bağlı)</label>
+                <textarea id="generalFortuneQuestion" rows="4" maxlength="1200" placeholder="Özellikle merak ettiğin konuyu yaz..."></textarea>
+            </div>
+
+            <div class="analysis-fields hidden" id="birthChartFields">
+                <p class="analysis-hint">Doğum haritası yorumunun temelini doğum bilgilerin oluşturur.</p>
+                <label for="birthChartDate">Doğum tarihi</label>
+                <input id="birthChartDate" type="date" required>
+                <label for="birthChartTime">Doğum saati (mümkünse kesin)</label>
+                <input id="birthChartTime" type="time">
+                <label for="birthChartPlace">Doğum yeri (şehir/ülke)</label>
+                <input id="birthChartPlace" type="text" maxlength="120" placeholder="Örn. Viyana, Avusturya" required>
+                <label for="birthChartFocus">Harita inceleme alanı</label>
+                <select id="birthChartFocus">
+                    <option value="whole">Haritanın genel yorumu</option>
+                    <option value="character">Karakter ve içsel dinamikler</option>
+                    <option value="relationships">İlişkiler ve bağ kurma</option>
+                    <option value="career">Kariyer ve yön</option>
+                    <option value="potential">Potansiyeller ve gelişim temaları</option>
+                </select>
+                <label for="birthChartQuestion">Ek soru (isteğe bağlı)</label>
+                <textarea id="birthChartQuestion" rows="3" maxlength="1200" placeholder="Haritanda özellikle incelemek istediğin konu..."></textarea>
             </div>
 
             <div class="analysis-fields hidden" id="numerologyFields">
