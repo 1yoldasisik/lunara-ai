@@ -1271,9 +1271,9 @@ app.post("/api/contact", requireSameOrigin, contactLimiter, async (req, res) => 
         });
     }
 
-    const name = String(req.body?.name || "").trim();
+    const name = String(req.body?.name || "").replace(/[\r\n]+/g, " ").trim();
     const email = String(req.body?.email || "").trim().toLowerCase();
-    const subject = String(req.body?.subject || "").trim();
+    const subject = String(req.body?.subject || "").replace(/[\r\n]+/g, " ").trim();
     const message = String(req.body?.message || "").trim();
     const honeypot = String(req.body?.website || "").trim();
 
@@ -1287,7 +1287,7 @@ app.post("/api/contact", requireSameOrigin, contactLimiter, async (req, res) => 
 
     if (
         name.length < 2 || name.length > 80 ||
-        email.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email) ||
+        email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ||
         subject.length < 3 || subject.length > 120 ||
         message.length < 10 || message.length > 5000
     ) {
@@ -1312,7 +1312,7 @@ app.post("/api/contact", requireSameOrigin, contactLimiter, async (req, res) => 
                 "",
                 "Mesaj:",
                 message
-            ].join("\\n")
+            ].join("\n")
         });
 
         return res.json({
