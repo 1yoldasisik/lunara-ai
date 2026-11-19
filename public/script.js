@@ -288,7 +288,9 @@ function openFeature(featureName) {
 
     const normalized = String(featureName).toLocaleLowerCase("tr-TR");
     let type = "personal";
-    if (normalized.includes("tarot")) type = "tarot";
+    if (normalized.includes("doğum haritası")) type = "birthchart";
+    else if (normalized.includes("genel fal")) type = "generalfortune";
+    else if (normalized.includes("tarot")) type = "tarot";
     else if (normalized.includes("kahve")) type = "coffee";
     else if (normalized.includes("burç")) type = "horoscope";
     else if (normalized.includes("numeroloji")) type = "numerology";
@@ -300,10 +302,9 @@ function openFeature(featureName) {
         horoscope: "Burç Yorumu",
         numerology: "Numeroloji Analizi",
         love: "Aşk ve İlişki Analizi",
-        personal: featureName === "Doğum Haritası" ? "Doğum Haritası Yorumu" :
-            featureName === "Aşk Falı" ? "Aşk ve İlişki Analizi" :
-            featureName === "Numeroloji" ? "Numeroloji Analizi" :
-            featureName === "Genel Fal" ? "Genel Yaşam Yorumu" : "Kişisel Analiz"
+        personal: "Kişisel Analiz",
+        generalfortune: "Genel Fal",
+        birthchart: "Doğum Haritası Yorumu"
     };
 
     document.getElementById("analysisForm").reset();
@@ -312,11 +313,16 @@ function openFeature(featureName) {
     if (type === "personal") document.getElementById("analysisTitle").textContent = titles.personal;
     document.getElementById("analysisDescription").textContent = type === "love"
         ? "Aşk ve ilişki dinamiklerine özel hazırlanmış kişisel yorum."
-        : type === "numerology"
+         : type === "numerology"
         ? "Önce kişisel sayıların matematiksel olarak hesaplanır, ardından sembolik anlamları yorumlanır."
+        : type === "birthchart"
+        ? "Doğum bilgilerin ve seçtiğin inceleme alanı üzerinden astrolojik yorum."
+        : type === "generalfortune"
+        ? "Seçtiğin yaşam odağına göre hazırlanmış genel fal yorumu."
         : "Gemini yapay zekâsı ile hazırlanan sana özel sembolik yorum.";
-    ["tarot", "coffee", "horoscope", "personal", "numerology", "love"].forEach(name => {
-        document.getElementById(name + "Fields").classList.toggle("hidden", name !== type);
+    const fieldTypes = { tarot: "tarot", coffee: "coffee", horoscope: "horoscope", personal: "personal", numerology: "numerology", love: "love", generalfortune: "generalFortune", birthchart: "birthChart" };
+    Object.entries(fieldTypes).forEach(([analysisType, fieldName]) => {
+        document.getElementById(fieldName + "Fields").classList.toggle("hidden", analysisType !== type);
     });
     document.getElementById("analysisForm").classList.remove("hidden");
     document.getElementById("analysisLoading").classList.add("hidden");
@@ -410,6 +416,16 @@ document.getElementById("analysisForm").addEventListener("submit", async event =
         details.partnerName = document.getElementById("lovePartnerName").value.trim();
         details.partnerBirthDate = document.getElementById("lovePartnerBirthDate").value;
         question = document.getElementById("loveQuestion").value.trim();
+    } else if (type === "generalfortune") {
+        details.focus = document.getElementById("generalFortuneFocus").value;
+        question = document.getElementById("generalFortuneQuestion").value.trim();
+    } else if (type === "birthchart") {
+        details.birthDate = document.getElementById("birthChartDate").value;
+        details.birthTime = document.getElementById("birthChartTime").value;
+        details.birthPlace = document.getElementById("birthChartPlace").value.trim();
+        details.focus = document.getElementById("birthChartFocus").value;
+        question = document.getElementById("birthChartQuestion").value.trim();
+        if (!details.birthDate || !details.birthPlace) return showMessage("Doğum tarihi ve doğum yeri alanlarını doldurun.");
     } else if (type === "numerology") {
         details.fullName = document.getElementById("numerologyFullName").value.trim();
         details.birthDate = document.getElementById("numerologyBirthDate").value;
