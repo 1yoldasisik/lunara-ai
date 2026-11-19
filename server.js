@@ -1153,10 +1153,25 @@ app.post("/api/analyses", requireSameOrigin, requireLogin, analysisLimiter, asyn
                 return res.status(400).json({ success: false, message: "Lütfen geçerli bir burç seçin." });
             }
             prompt = `${sign} burcu için ${periodName} astrolojik sembolizm yorumu yaz. Aşk/ilişkiler, iş/üretkenlik, kişisel denge ve günün/haftanın/ayın önerisi başlıklarını kullan. Gerçek zamanlı gezegen konumlarına erişimin olmadığını varsay; belirli transit veya olay uydurma. Yorumu zengin, kişiye hitap eden, premium ve sembolik bir anlatımla sun; otomatik meta disclaimer ekleme. Kullanıcının sorusu/notu: ${question || "Genel yorum"}`;
+        } else if (type === "birthchart") {
+            const birthDate = String(details.birthDate || "");
+            const birthTime = String(details.birthTime || "");
+            const birthPlace = String(details.birthPlace || "").trim().slice(0, 120);
+            const focus = String(details.focus || "whole");
+            const focusMap = { whole: "Haritanın genel yorumu", character: "Karakter ve içsel dinamikler", relationships: "İlişkiler ve bağ kurma", career: "Kariyer ve yön", potential: "Potansiyeller ve gelişim temaları" };
+            if (!validateBirthDate(birthDate) || birthPlace.length < 2 || !Object.hasOwn(focusMap, focus)) return res.status(400).json({ success: false, message: "Doğum haritası için geçerli doğum tarihi, doğum yeri ve analiz odağı gerekli." });
+            prompt = `Lunara için doğum haritası odaklı, derin ve yapılandırılmış astrolojik sembolizm yorumunu hazırla. Doğum tarihi: ${birthDate}. Doğum saati: ${birthTime || "Belirtilmedi"}. Doğum yeri: ${birthPlace}. İnceleme odağı: ${focusMap[focus]}. Gerçek gezegen/ev/açı hesaplaması verilmiyorsa konum, derece, yükselen, ev veya açı uydurma; doğum saati eksikse saat hassasiyetine bağlı unsurları kesinleştirme. Veriler doğrulanmış harita hesaplaması gibi sunulmadan genel astrolojik sembolizm çerçevesinde yorum yap. Ana temalar, güçlü yönler, gelişim alanları ve uygulanabilir öz keşif önerileri içeren premium anlatım kullan. Kullanıcının ek sorusu: ${question || "Ek soru yok"}.`;
+        } else if (type === "generalfortune") {
+            const focus = String(details.focus || "overall");
+            const focusMap = { overall: "Genel enerji ve yaşam akışı", opportunities: "Fırsatlar ve yeni başlangıçlar", work: "İş ve maddi konular", social: "Sosyal çevre ve iletişim", nearFuture: "Yakın dönem temaları" };
+            if (!Object.hasOwn(focusMap, focus)) return res.status(400).json({ success: false, message: "Geçerli genel fal odağı seçin." });
+            prompt = `Lunara için ${focusMap[focus]} temalı, kapsamlı ve özgün genel fal yorumu hazırla. En az 4 ayrı başlık, sembolik çağrışımlar, olası temalar, fırsat ve dikkat alanları, somut düşünme önerileriyle premium anlatım kullan. Kesin gelecek, olay veya tarih iddiasında bulunma. Odağı koru; başka analiz kategorilerinin şablonlarını tekrar etme. Kullanıcının notu: ${question || "Genel yorum"}.`;
         } else {
-            const focus = String(details.focus || "Genel yaşam").slice(0, 80);
-            prompt = `Kullanıcı için ${focus} odağında kapsamlı bir kişisel farkındalık analizi yaz. Güçlü yönler, zorlanma alanları, ilişkiler/iletişim, hedefler ve uygulanabilir küçük adımlar başlıklarını kullan. Kullanıcıyı tanımadığın özellikleri kesin gerçek gibi sunma; yorumlarını kullanıcının verdiği bilgilerle sınırla. Lunara'nın kendinden emin ve premium anlatımını koru, otomatik meta disclaimer ekleme. Kullanıcının paylaştığı bilgi ve sorusu: ${question || "Kendimi daha iyi tanımak istiyorum."}`;
-        }
+            const focus = String(details.focus || "");
+            const focusMap = { "self-awareness": "Kendini tanıma ve karakter", strengths: "Güçlü yönler ve potansiyel", decisions: "Kararlar ve yön belirleme", motivation: "Motivasyon ve alışkanlıklar", "life-balance": "Yaşam dengesi" };
+            if (!Object.hasOwn(focusMap, focus)) return res.status(400).json({ success: false, message: "Geçerli kişisel analiz odağı seçin." });
+            prompt = `Lunara için ${focusMap[focus]} odaklı kişisel farkındalık analizi hazırla. Yalnızca kullanıcı tarafından paylaşılan bağlamı kullan; kişilik özelliklerini kesin gerçek olarak varsayma. Bu modülün odağına bağlı kal, diğer modüllerin menü ve promptlarını tekrar etme. 4-5 yapılandırılmış başlık, dengeli değerlendirme ve uygulanabilir öneriler sun. Premium ve kendinden emin anlatım kullan. Kullanıcının paylaştığı bilgi ve sorusu: ${question || "Ek bilgi yok"}.`;
+        }  }
 
         const content = await generateGeminiAnalysis(prompt, image);
 
