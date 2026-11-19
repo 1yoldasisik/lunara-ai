@@ -288,10 +288,60 @@ const analysisLimiter = rateLimit({
     message: { success: false, message: "Saatlik analiz sınırına ulaştınız. Daha sonra tekrar deneyin." }
 });
 
+function reduceNumerologyNumber(value) {
+    let number = Math.abs(Number(value) || 0);
+    while (number > 9 && ![11, 22, 33].includes(number)) {
+        number = String(number).split("").reduce((sum, digit) => sum + Number(digit), 0);
+    }
+    return number;
+}
+
+function normalizeNumerologyName(value) {
+    return String(value || "")
+        .normalize("NFD")
+        .replace(/[\\u0300-\\u036f]/g, "")
+        .toUpperCase()
+        .replace(/Ç/g, "C").replace(/Ğ/g, "G").replace(/İ/g, "I")
+        .replace(/Ö/g, "O").replace(/Ş/g, "S").replace(/Ü/g, "U");
+}
+
+function calculateNumerology(fullName, birthDate) {
+    const name = normalizeNumerologyName(fullName);
+    const letters = name.match(/[A-Z]/g) || [];
+    if (letters.length < 2) {
+        const error = new Error("Ad ve soyad alanında en az iki harf bulunmalıdır.");
+        error.status = 400;
+        throw error;
+    }
+
+    const letterValue = letter => ((letter.charCodeAt(0) - 65) % 9) + 1;
+    const expressionTotal = letters.reduce((sum, letter) => sum + letterValue(letter), 0);
+    const vowels = letters.filter(letter => "AEIOU".includes(letter));
+    const soulUrgeTotal = vowels.reduce((sum, letter) => sum + letterValue(letter), 0);
+    const consonants = letters.filter(letter => !"AEIOU".includes(letter));
+    const personalityTotal = consonants.reduce((sum, letter) => sum + letterValue(letter), 0);
+
+    const [year, month, day] = birthDate.split("-").map(Number);
+    const dateDigits = birthDate.replace(/-/g, "").split("").reduce((sum, digit) => sum + Number(digit), 0);
+    const personalYearDigits = String(day) + String(month) + String(new Date().getFullYear());
+    const personalYearTotal = personalYearDigits.split("").reduce((sum, digit) => sum + Number(digit), 0);
+
+    return {
+        lifePath: reduceNumerologyNumber(dateDigits),
+        birthday: reduceNumerologyNumber(day),
+        expression: reduceNumerologyNumber(expressionTotal),
+        soulUrge: reduceNumerologyNumber(soulUrgeTotal),
+        personality: reduceNumerologyNumber(personalityTotal),
+        personalYear: reduceNumerologyNumber(personalYearTotal),
+        calculationMethod: "Pythagorean letter mapping; master numbers 11, 22 and 33 preserved"
+    };
+}
+
 const ANALYSIS_TYPES = {
     tarot: { title: "Tarot Falı" },
     coffee: { title: "Kahve Falı" },
     horoscope: { title: "Burç Yorumu" },
+    numerology: { title: "Numeroloji Analizi" },
     personal: { title: "Kişisel Analiz" }
 };
 
@@ -1096,7 +1146,20 @@ app.post("/api/analyses", requireSameOrigin, requireLogin, analysisLimiter, asyn
         }
 
         let prompt = "";
-        if (type === "tarot") {
+        if (type === "numerology") {
+            const fullName = String(details.fullName || "").trim().slice(0, 120);
+            const birthDate = String(details.birthDate || "");
+            const validDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(birthDate) &&
+                !Number.isNaN(Date.parse(birthDate)) &&
+                new Date(birthDate).toISOString().slice(0, 10) === birthDate &&
+                birthDate <= new Date().toISOString().slice(0, 10);
+            if (fullName.length < 2 || !validDate) {
+                return res.status(400).json({ success: false, message: "Numeroloji için geçerli tam ad ve geçmiş bir doğum tarihi girin." });
+            }
+            const numbers = calculateNumerology(fullName, birthDate);
+            const focus = String(details.focus || "Genel kişisel keşif").slice(0, 80);
+            prompt = `Lunara için kapsamlı ve özenli bir numeroloji raporu yaz. Kullanıcıya ait sayıları kendin yeniden hesaplama veya değiştirme; aşağıdaki doğrulanmış matematiksel sonuçları aynen kullan. Her sayı için hesaplamada kullanılan yöntemi kısaca açıkla, ardından numerolojideki geleneksel sembolik anlamını dengeli ve kesinlik iddiası olmadan yorumla. Rapor başlıkları: Yaşam Yolu Sayısı, Doğum Günü Sayısı, Kader/İfade Sayısı, Ruh Arzusu Sayısı, Kişilik Sayısı, Kişisel Yıl Sayısı, Sayılar Arasındaki Ortak Tema ve Kişisel Keşif Önerileri. Master sayılar 11, 22 ve 33 korunmuştur. Numerolojinin bilimsel kişilik ölçümü olmadığını iddialı veya küçümseyici olmayan kısa bir notla belirt. Odak alanı: ${focus}. Doğum tarihi: ${birthDate}. Doğum adı: ${fullName}. Hesaplanmış sonuçlar: ${JSON.stringify(numbers)}`;
+        } else if (type === "tarot") {
             const spread = String(details.spread || "three").slice(0, 20);
             const spreadName = ({ one: "Tek kart", three: "Üç kart (geçmiş-şimdi-olasılık)", love: "Aşk açılımı", celtic: "Kelt haçı" })[spread] || "Üç kart";
             prompt = `Lunara üyesi için ${spreadName} tarot açılımı hazırla. Kartları sembolik olarak sen seç. Her kartın adını, temel sembolizmini ve soruyla bağlantısını açıkla. Sonunda genel tema, üzerinde düşünebileceği noktalar ve olumlu/gerçekçi bir kapanış ver. Kullanıcının sorusu: ${question || "Genel yaşam yolculuğu"}`;
