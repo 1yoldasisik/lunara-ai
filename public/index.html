@@ -407,6 +407,27 @@
                 <textarea id="horoscopeQuestion" rows="3" maxlength="1200" placeholder="Özellikle merak ettiğin bir konu..."></textarea>
             </div>
 
+            <div class="analysis-fields hidden" id="loveFields">
+                <label for="loveFocus">Aşk ve ilişki analizi</label>
+                <select id="loveFocus">
+                    <option value="loveLife">Aşk hayatım</option>
+                    <option value="person">Aklımdaki kişi</option>
+                    <option value="relationship">Mevcut ilişkim</option>
+                    <option value="past">Geçmiş ilişkim</option>
+                    <option value="compatibility">Aşk uyumu</option>
+                    <option value="journey">Aşk yolculuğum</option>
+                </select>
+                <div id="loveCompatibilityFields" class="hidden">
+                    <label for="lovePartnerName">Diğer kişinin adı (isteğe bağlı)</label>
+                    <input id="lovePartnerName" type="text" maxlength="80" placeholder="İsim">
+                    <label for="lovePartnerBirthDate">Diğer kişinin doğum tarihi (isteğe bağlı)</label>
+                    <input id="lovePartnerBirthDate" type="date">
+                </div>
+                <label for="loveQuestion">Aklındaki soru (isteğe bağlı)</label>
+                <textarea id="loveQuestion" rows="4" maxlength="1200" placeholder="Aşk veya ilişkinle ilgili merak ettiğin konuyu yaz..."></textarea>
+                <p class="analysis-hint">Seçtiğin konuya özel, kapsamlı bir aşk ve ilişki yorumu hazırlanır.</p>
+            </div>
+
             <div class="analysis-fields hidden" id="personalFields">
                 <label for="personalFocus">Analiz konusu</label>
                 <select id="personalFocus">
