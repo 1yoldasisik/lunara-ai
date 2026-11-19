@@ -420,6 +420,21 @@
                 <textarea id="personalQuestion" rows="5" maxlength="1200" placeholder="Sorunu, hedefini veya üzerinde düşündüğün konuyu anlat..."></textarea>
             </div>
 
+            <div class="analysis-fields hidden" id="numerologyFields">
+                <p class="analysis-hint">Numeroloji haritan, doğum tarihin ve doğumunda verilen tam adın üzerinden hesaplanır. Bilgilerin yalnızca bu analiz için kullanılır.</p>
+                <label for="numerologyFullName">Doğumda verilen tam ad ve soyad</label>
+                <input id="numerologyFullName" type="text" minlength="2" maxlength="120" autocomplete="name" placeholder="Adın ve soyadın" />
+                <label for="numerologyBirthDate">Doğum tarihi</label>
+                <input id="numerologyBirthDate" type="date" />
+                <label for="numerologyFocus">Özellikle odaklanmak istediğin alan (isteğe bağlı)</label>
+                <select id="numerologyFocus">
+                    <option value="Genel kişisel keşif">Genel kişisel keşif</option>
+                    <option value="İlişkiler ve iletişim">İlişkiler ve iletişim</option>
+                    <option value="Kariyer ve yaşam hedefleri">Kariyer ve yaşam hedefleri</option>
+                    <option value="Kişisel gelişim">Kişisel gelişim</option>
+                </select>
+            </div>
+
             <div class="analysis-actions">
                 <button class="gold-btn form-submit" id="analysisSubmit" type="submit">Analizi Başlat ✧</button>
             </div>
