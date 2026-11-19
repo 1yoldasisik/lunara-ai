@@ -27,7 +27,27 @@
         <p class="eyebrow">LUNARA İLE BAĞLANTI</p>
         <h1><span>İletişim</span></h1>
         <p class="about-copy">Lunara hakkında soruların, önerilerin veya paylaşmak istediğin geri bildirimlerin mi var? Görüşlerin, platformu geliştirmemize yardımcı olur.</p>
-        <div class="contact-note">İletişim kanallarımızı ve doğrudan mesaj gönderme seçeneklerini bu sayfada yakında paylaşacağız.</div>
+        <form class="contact-form" id="contactForm" novalidate>
+            <label for="contactName">Adınız</label>
+            <input id="contactName" name="name" type="text" minlength="2" maxlength="80" autocomplete="name" required placeholder="Adınız ve soyadınız">
+
+            <label for="contactEmail">E-posta adresiniz</label>
+            <input id="contactEmail" name="email" type="email" maxlength="254" autocomplete="email" required placeholder="ornek@email.com">
+
+            <label for="contactSubject">Konu</label>
+            <input id="contactSubject" name="subject" type="text" minlength="3" maxlength="120" required placeholder="Mesajınızın konusu">
+
+            <label for="contactMessage">Mesajınız</label>
+            <textarea id="contactMessage" name="message" rows="6" minlength="10" maxlength="5000" required placeholder="Mesajınızı buraya yazın..."></textarea>
+
+            <div class="contact-honeypot" aria-hidden="true">
+                <label for="contactWebsite">Web sitesi</label>
+                <input id="contactWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+            </div>
+
+            <button class="gold-btn form-submit" id="contactSubmit" type="submit">Mesajı Gönder <span>✧</span></button>
+            <p class="contact-status" id="contactStatus" role="status" aria-live="polite"></p>
+        </form>
         <a href="index.html" class="gold-btn">Anasayfaya Dön <span>✧</span></a>
     </section>
 </main>
@@ -37,5 +57,5 @@
     <p>© 2026 Lunara AI. Tüm hakları saklıdır.</p>
     <small>İçerikler eğlence ve kişisel keşif amaçlıdır; kesin gelecek tahmini değildir.</small>
 </footer>
-</body>
+<script src="iletisim.js?v=20261119-contact-form-v1" defer></script>\n</body>
 </html>
