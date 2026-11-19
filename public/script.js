@@ -292,12 +292,14 @@ function openFeature(featureName) {
     else if (normalized.includes("kahve")) type = "coffee";
     else if (normalized.includes("burç")) type = "horoscope";
     else if (normalized.includes("numeroloji")) type = "numerology";
+    else if (normalized.includes("aşk")) type = "love";
 
     const titles = {
         tarot: "Tarot Falı",
         coffee: "Kahve Falı",
         horoscope: "Burç Yorumu",
         numerology: "Numeroloji Analizi",
+        love: "Aşk ve İlişki Analizi",
         personal: featureName === "Doğum Haritası" ? "Doğum Haritası Yorumu" :
             featureName === "Aşk Falı" ? "Aşk ve İlişki Analizi" :
             featureName === "Numeroloji" ? "Numeroloji Analizi" :
@@ -308,10 +310,12 @@ function openFeature(featureName) {
     document.getElementById("analysisType").value = type;
     document.getElementById("analysisTitle").textContent = titles[type] || titles.personal;
     if (type === "personal") document.getElementById("analysisTitle").textContent = titles.personal;
-    document.getElementById("analysisDescription").textContent = type === "numerology"
+    document.getElementById("analysisDescription").textContent = type === "love"
+        ? "Aşk ve ilişki dinamiklerine özel hazırlanmış kişisel yorum."
+        : type === "numerology"
         ? "Önce kişisel sayıların matematiksel olarak hesaplanır, ardından sembolik anlamları yorumlanır."
         : "Gemini yapay zekâsı ile hazırlanan sana özel sembolik yorum.";
-    ["tarot", "coffee", "horoscope", "personal", "numerology"].forEach(name => {
+    ["tarot", "coffee", "horoscope", "personal", "numerology", "love"].forEach(name => {
         document.getElementById(name + "Fields").classList.toggle("hidden", name !== type);
     });
     document.getElementById("analysisForm").classList.remove("hidden");
@@ -319,6 +323,12 @@ function openFeature(featureName) {
     document.getElementById("analysisResult").classList.add("hidden");
     analysisModal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
+    if (type === "love") {
+        const loveFocus = document.getElementById("loveFocus");
+        const partnerFields = document.getElementById("loveCompatibilityFields");
+        loveFocus?.addEventListener("change", () => partnerFields.classList.toggle("hidden", loveFocus.value !== "compatibility"));
+        partnerFields?.classList.toggle("hidden", loveFocus.value !== "compatibility");
+    }
     loadAnalysisHistory();
 }
 
@@ -395,6 +405,11 @@ document.getElementById("analysisForm").addEventListener("submit", async event =
         details.period = document.getElementById("horoscopePeriod").value;
         question = document.getElementById("horoscopeQuestion").value.trim();
         if (!details.sign) return showMessage("Lütfen burcunu seç.");
+    } else if (type === "love") {
+        details.focus = document.getElementById("loveFocus").value;
+        details.partnerName = document.getElementById("lovePartnerName").value.trim();
+        details.partnerBirthDate = document.getElementById("lovePartnerBirthDate").value;
+        question = document.getElementById("loveQuestion").value.trim();
     } else if (type === "numerology") {
         details.fullName = document.getElementById("numerologyFullName").value.trim();
         details.birthDate = document.getElementById("numerologyBirthDate").value;
