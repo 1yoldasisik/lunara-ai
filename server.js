@@ -295,6 +295,7 @@ const ANALYSIS_TYPES = {
     coffee: { title: "Kahve Falı" },
     horoscope: { title: "Burç Yorumu" },
     numerology: { title: "Numeroloji Analizi" },
+    love: { title: "Aşk ve İlişki Analizi" },
     personal: { title: "Kişisel Analiz" }
 };
 
@@ -1109,6 +1110,33 @@ app.post("/api/analyses", requireSameOrigin, requireLogin, analysisLimiter, asyn
             const numbers = calculateNumerology(fullName, birthDate);
             const focus = String(details.focus || "Genel kişisel keşif").slice(0, 80);
             prompt = `Lunara için kapsamlı, kişiye özel ve yapılandırılmış bir numeroloji raporu yaz. Sunucu tarafından hesaplanmış sonuçları, ara değerleri ve bileşik sayı göstergelerini aynen kullan; yeniden hesaplama, değiştirme veya uydurma. Her göstergede hesaplama özeti, sembolik anlam, dengeleyici yön ve kısa düşünme sorusu ver. Karmik borç 13, 14, 16, 19 yalnızca hesaplama verisinde varsa bileşik değer olarak ayrıca açıkla; bunları ceza veya kesin kader olarak sunma. Master 11, 22 ve 33 değerlerini master sayı olarak tanımla. Başlıklar: Genel profil; Yaşam Yolu; Doğum Günü; Kader/İfade; Ruh Arzusu; Kişilik; Kişisel Yıl (hesaplama yılını açık yaz); Karmik Borç göstergeleri; Sayılar Arasındaki Ortak Tema (tekrar, uyum ve gerilimleri dengeli ele al); Odak alanına özel yorum; kişisel keşif önerileri. Rapor boyunca Lunara'nın premium, zarif, kendinden emin ve mistik anlatımını koru. Özür dileyen, deneyimi küçülten, bilimsel geçerliliğe dair otomatik uyarı/notlar, tanı yöntemi gibi ifadeler veya raporun değerini düşüren meta açıklamalar ekleme. Yorumları sembolik perspektifle sun; kullanıcıya yol gösteren, güçlü ve dengeli bir dil kullan. Odak: ${focus}. Doğum tarihi: ${birthDate}. Doğum adı: ${fullName}. Hesaplama yılı: ${numbers.calculationYear}. Veriler: ${JSON.stringify(numbers)}`;
+        } else if (type === "love") {
+            const loveFocus = String(details.focus || "loveLife");
+            const loveFocusMap = {
+                loveLife: "Aşk hayatım",
+                person: "Aklımdaki kişi",
+                relationship: "Mevcut ilişkim",
+                past: "Geçmiş ilişkim",
+                compatibility: "Aşk uyumu",
+                journey: "Aşk yolculuğum"
+            };
+            if (!Object.hasOwn(loveFocusMap, loveFocus)) {
+                return res.status(400).json({ success: false, message: "Geçerli bir aşk analizi kategorisi seçin." });
+            }
+            const partnerName = String(details.partnerName || "").trim().slice(0, 80);
+            const partnerBirthDate = String(details.partnerBirthDate || "");
+            if (partnerBirthDate && !validateBirthDate(partnerBirthDate)) {
+                return res.status(400).json({ success: false, message: "Diğer kişi için geçerli bir doğum tarihi seçin." });
+            }
+            const focusPrompts = {
+                loveLife: "Kullanıcının aşk hayatını genel perspektifte ele al: duygusal beklentiler, ilişki yaklaşımı, tekrar eden temalar, tanışma ve bağ kurma olasılıklarına yönelik sembolik perspektif. Kesin olay veya zaman iddiası verme.",
+                person: "Aklındaki kişiyle ilgili durumu, kullanıcının paylaştığı bağlam üzerinden sembolik olarak ele al: iletişim, belirsizlik, yakınlık, karşılıklı beklentiler ve olası yaklaşımlar. Karşı tarafın zihnini veya duygularını kesin olarak bildiğini iddia etme.",
+                relationship: "Mevcut ilişkiyi ele al: iletişim, güven, yakınlık, ortak ihtiyaçlar, çatışma dinamikleri, güçlü yönler ve ilişkiyi besleyebilecek somut adımlar.",
+                past: "Geçmiş ilişkiyi ele al: bağın izleri, kapanmamış duygular, öğrenilenler, sınırlar ve ileriye dönük kişisel yön. Yeniden birleşme konusunda kesinlik iddiası verme.",
+                compatibility: "İki kişi arasındaki uyumu sembolik ve ilişki odaklı ele al: iletişim, ihtiyaçlar, değerler, yakınlık, tamamlayıcılık ve gerilim alanları. Verilen bilgiler yetersizse bunu belirt; doğum tarihinden kişilik hakkında kesin hüküm üretme.",
+                journey: "Kullanıcının aşk yolculuğunu ele al: kendi ilişki yaklaşımı, duygusal ihtiyaçları, sınırlar, yeni başlangıçlara hazırlık ve uygulanabilir farkındalık önerileri."
+            };
+            prompt = `Lunara için ${loveFocusMap[loveFocus]} başlıklı, kapsamlı ve özgün bir aşk/ilişki analizi hazırla. Kategoriye özgü yönergeler: ${focusPrompts[loveFocus]} En az 4-6 anlamlı başlık, derin sembolik yorum, dengeli değerlendirme ve uygulanabilir önerilerle premium anlatım kullan. Başka kişilerin düşünce veya duygularını kesin gerçek gibi sunma; kader, ayrılık, evlilik veya belirli tarihler hakkında kesin hüküm verme. ${loveFocus === "compatibility" ? "Uyum analizinde verilen diğer kişi adı ve doğum tarihi bilgilerini dikkate al, ancak eksik bilgilerden sonuç uydurma." : ""} Seçilen kategori: ${loveFocusMap[loveFocus]}. Diğer kişi: ${partnerName || "Ad verilmedi"}. Diğer kişinin doğum tarihi: ${partnerBirthDate || "Verilmedi"}. Kullanıcının sorusu: ${question || "Ek soru yok"}.`;
         } else if (type === "tarot") {
             const spread = String(details.spread || "three").slice(0, 20);
             const spreadName = ({ one: "Tek kart", three: "Üç kart (geçmiş-şimdi-olasılık)", love: "Aşk açılımı", celtic: "Kelt haçı" })[spread] || "Üç kart";
