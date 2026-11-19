@@ -308,8 +308,9 @@ function openFeature(featureName) {
     document.getElementById("analysisType").value = type;
     document.getElementById("analysisTitle").textContent = titles[type] || titles.personal;
     if (type === "personal") document.getElementById("analysisTitle").textContent = titles.personal;
-    document.getElementById("analysisDescription").textContent =
-        "Gemini yapay zekâsı ile hazırlanan sana özel sembolik yorum.";
+    document.getElementById("analysisDescription").textContent = type === "numerology"
+        ? "Önce kişisel sayıların matematiksel olarak hesaplanır, ardından sembolik anlamları yorumlanır."
+        : "Gemini yapay zekâsı ile hazırlanan sana özel sembolik yorum.";
     ["tarot", "coffee", "horoscope", "personal", "numerology"].forEach(name => {
         document.getElementById(name + "Fields").classList.toggle("hidden", name !== type);
     });
