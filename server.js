@@ -299,7 +299,7 @@ function reduceNumerologyNumber(value) {
 function normalizeNumerologyName(value) {
     return String(value || "")
         .normalize("NFD")
-        .replace(/[\\u0300-\\u036f]/g, "")
+        .replace(/[\u0300-\u036f]/g, "")
         .toUpperCase()
         .replace(/Ç/g, "C").replace(/Ğ/g, "G").replace(/İ/g, "I")
         .replace(/Ö/g, "O").replace(/Ş/g, "S").replace(/Ü/g, "U");
@@ -1149,7 +1149,7 @@ app.post("/api/analyses", requireSameOrigin, requireLogin, analysisLimiter, asyn
         if (type === "numerology") {
             const fullName = String(details.fullName || "").trim().slice(0, 120);
             const birthDate = String(details.birthDate || "");
-            const validDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(birthDate) &&
+            const validDate = /^\d{4}-\d{2}-\d{2}$/.test(birthDate) &&
                 !Number.isNaN(Date.parse(birthDate)) &&
                 new Date(birthDate).toISOString().slice(0, 10) === birthDate &&
                 birthDate <= new Date().toISOString().slice(0, 10);
