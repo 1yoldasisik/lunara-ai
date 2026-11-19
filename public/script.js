@@ -289,7 +289,7 @@ function openFeature(featureName) {
     const normalized = String(featureName).toLocaleLowerCase("tr-TR");
     let type = "personal";
     if (normalized.includes("doğum haritası")) type = "birthchart";
-    else if (normalized.includes("genel fal")) type = "generalfortune";
+    else if (normalized.includes("genel fal") || normalized.includes("genel yaşam") || normalized.includes("yaşam yorumu")) type = "generalfortune";
     else if (normalized.includes("tarot")) type = "tarot";
     else if (normalized.includes("kahve")) type = "coffee";
     else if (normalized.includes("burç")) type = "horoscope";
