@@ -314,8 +314,9 @@ function openFeature(featureName) {
         : type === "numerology"
         ? "Önce kişisel sayıların matematiksel olarak hesaplanır, ardından sembolik anlamları yorumlanır."
         : "Gemini yapay zekâsı ile hazırlanan sana özel sembolik yorum.";
-    ["tarot", "coffee", "horoscope", "personal", "numerology", "love", "generalFortune", "birthChart"].forEach(name => {
-        document.getElementById(name + "Fields").classList.toggle("hidden", name !== type);
+    const fieldTypes = { tarot: "tarot", coffee: "coffee", horoscope: "horoscope", personal: "personal", numerology: "numerology", love: "love", generalfortune: "generalFortune", birthchart: "birthChart" };
+    Object.entries(fieldTypes).forEach(([analysisType, fieldName]) => {
+        document.getElementById(fieldName + "Fields").classList.toggle("hidden", analysisType !== type);
     });
     document.getElementById("analysisForm").classList.remove("hidden");
     document.getElementById("analysisLoading").classList.add("hidden");
@@ -409,6 +410,16 @@ document.getElementById("analysisForm").addEventListener("submit", async event =
         details.partnerName = document.getElementById("lovePartnerName").value.trim();
         details.partnerBirthDate = document.getElementById("lovePartnerBirthDate").value;
         question = document.getElementById("loveQuestion").value.trim();
+    } else if (type === "generalfortune") {
+        details.focus = document.getElementById("generalFortuneFocus").value;
+        question = document.getElementById("generalFortuneQuestion").value.trim();
+    } else if (type === "birthchart") {
+        details.birthDate = document.getElementById("birthChartDate").value;
+        details.birthTime = document.getElementById("birthChartTime").value;
+        details.birthPlace = document.getElementById("birthChartPlace").value.trim();
+        details.focus = document.getElementById("birthChartFocus").value;
+        question = document.getElementById("birthChartQuestion").value.trim();
+        if (!details.birthDate || !details.birthPlace) return showMessage("Doğum tarihi ve doğum yeri alanlarını doldurun.");
     } else if (type === "numerology") {
         details.fullName = document.getElementById("numerologyFullName").value.trim();
         details.birthDate = document.getElementById("numerologyBirthDate").value;
