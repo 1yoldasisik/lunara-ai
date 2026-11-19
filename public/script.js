@@ -326,7 +326,7 @@ function openFeature(featureName) {
     if (type === "love") {
         const loveFocus = document.getElementById("loveFocus");
         const partnerFields = document.getElementById("loveCompatibilityFields");
-        loveFocus?.addEventListener("change", () => partnerFields.classList.toggle("hidden", loveFocus.value !== "compatibility"));
+        if (loveFocus) loveFocus.onchange = () => partnerFields.classList.toggle("hidden", loveFocus.value !== "compatibility");
         partnerFields?.classList.toggle("hidden", loveFocus.value !== "compatibility");
     }
     loadAnalysisHistory();
