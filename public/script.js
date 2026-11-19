@@ -302,7 +302,9 @@ function openFeature(featureName) {
         horoscope: "Burç Yorumu",
         numerology: "Numeroloji Analizi",
         love: "Aşk ve İlişki Analizi",
-        personal: "Kişisel Analiz"
+        personal: "Kişisel Analiz",
+        generalfortune: "Genel Fal",
+        birthchart: "Doğum Haritası Yorumu"
     };
 
     document.getElementById("analysisForm").reset();
@@ -311,8 +313,12 @@ function openFeature(featureName) {
     if (type === "personal") document.getElementById("analysisTitle").textContent = titles.personal;
     document.getElementById("analysisDescription").textContent = type === "love"
         ? "Aşk ve ilişki dinamiklerine özel hazırlanmış kişisel yorum."
-        : type === "numerology"
+         : type === "numerology"
         ? "Önce kişisel sayıların matematiksel olarak hesaplanır, ardından sembolik anlamları yorumlanır."
+        : type === "birthchart"
+        ? "Doğum bilgilerin ve seçtiğin inceleme alanı üzerinden astrolojik yorum."
+        : type === "generalfortune"
+        ? "Seçtiğin yaşam odağına göre hazırlanmış genel fal yorumu."
         : "Gemini yapay zekâsı ile hazırlanan sana özel sembolik yorum.";
     const fieldTypes = { tarot: "tarot", coffee: "coffee", horoscope: "horoscope", personal: "personal", numerology: "numerology", love: "love", generalfortune: "generalFortune", birthchart: "birthChart" };
     Object.entries(fieldTypes).forEach(([analysisType, fieldName]) => {
