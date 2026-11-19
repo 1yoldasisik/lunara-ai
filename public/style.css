@@ -27,17 +27,49 @@ button { cursor: pointer; }
 
 .header {
     min-height: 82px;
-    padding: 12px 7%;
+    padding: 12px 4%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
-    background: rgba(16,9,28,.96);
+    gap: 16px;
+    background: rgba(16,9,28,.97);
     border-bottom: 1px solid rgba(217,182,111,.17);
     position: sticky;
     top: 0;
     z-index: 10;
 }
+.header .logo { flex: 0 0 auto; }
+.header .nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 4px;
+    padding: 6px;
+    border: 1px solid rgba(167,123,219,.22);
+    border-radius: 999px;
+    color: var(--muted);
+    font-size: 12px;
+    white-space: nowrap;
+}
+.header .nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    transition: color .2s, background .2s;
+}
+.header .nav a:hover,
+.header .nav a[aria-current="page"] {
+    color: #fff;
+    background: rgba(111,53,157,.35);
+}
+.header .nav a[data-feature] { cursor: pointer; }
+.header .nav a[data-feature]:first-child { color: var(--gold); }
+.header-actions, .member-actions { flex: 0 0 auto; }
 
 .logo {
     font-family: "Cormorant Garamond", serif;
@@ -330,10 +362,18 @@ button { cursor: pointer; }
     .nav { gap: 15px; }
 }
 
+@media(max-width:900px) {
+    .header { flex-wrap: wrap; justify-content: center; gap: 10px 14px; padding: 10px 3%; }
+    .header .nav { order: 3; flex: 1 0 100%; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; }
+    .header .nav::-webkit-scrollbar { display: none; }
+    .header .nav a { padding: 8px 11px; }
+}
 @media(max-width:600px) {
-    .header { min-height: 70px; padding: 10px 5%; }
+    .header { min-height: auto; padding: 10px 4%; }
     .logo { font-size: 23px; }
-    .nav { display: none; }
+    .header .nav { order: 3; flex: 1 0 100%; gap: 3px; }
+    .header .nav a { padding: 8px 10px; font-size: 11px; }
+    .header .nav a span { display: inline; }
     .login-btn, .register-btn { padding: 8px 10px; font-size: 10px; }
     .hero { min-height: auto; padding: 42px 18px 38px; }
     .hero h1 { font-size: clamp(44px, 11vw, 60px); }
