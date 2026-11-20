@@ -1160,7 +1160,26 @@ app.post("/api/analyses", requireSameOrigin, requireLogin, analysisLimiter, asyn
             const focus = String(details.focus || "whole");
             const focusMap = { whole: "Haritanın genel yorumu", character: "Karakter ve içsel dinamikler", relationships: "İlişkiler ve bağ kurma", career: "Kariyer ve yön", potential: "Potansiyeller ve gelişim temaları" };
             if (!validateBirthDate(birthDate) || birthPlace.length < 2 || !Object.hasOwn(focusMap, focus)) return res.status(400).json({ success: false, message: "Doğum haritası için geçerli doğum tarihi, doğum yeri ve analiz odağı gerekli." });
-            prompt = `Lunara için doğum haritası odaklı, derin ve yapılandırılmış astrolojik sembolizm yorumunu hazırla. Doğum tarihi: ${birthDate}. Doğum saati: ${birthTime || "Belirtilmedi"}. Doğum yeri: ${birthPlace}. İnceleme odağı: ${focusMap[focus]}. Gerçek gezegen/ev/açı hesaplaması verilmiyorsa konum, derece, yükselen, ev veya açı uydurma; doğum saati eksikse saat hassasiyetine bağlı unsurları kesinleştirme. Veriler doğrulanmış harita hesaplaması gibi sunulmadan genel astrolojik sembolizm çerçevesinde yorum yap. Ana temalar, güçlü yönler, gelişim alanları ve uygulanabilir öz keşif önerileri içeren premium anlatım kullan. Kullanıcının ek sorusu: ${question || "Ek soru yok"}.`;
+            const birthChartFocusInstructions = {
+                whole: "Haritanın genel sentezini temel bileşenler ve ilişkileri üzerinden kur; doğrulanmışsa Güneş-Ay-yükselen, kişisel gezegenler, evler, açılar ve element/nitelik dengelerini bir araya getir.",
+                character: "Karakter analizini astrolojik göstergeler üzerinden oluştur: doğrulanmışsa Güneş, Ay, yükselen, Merkür, Venüs, Mars, evler ve açıları; motivasyon, duygu, iletişim, karar ve içsel gerilim temaları. Numerolojik sayı analizi kullanma.",
+                relationships: "İlişkileri doğrulanmışsa Ay, Venüs, Mars, 7. ev/yöneticisi ve ilgili açılar üzerinden ele al; yakınlık, ihtiyaç, iletişim, çekim, sınırlar ve çatışma/uzlaşma temaları. Sinastri verisi yoksa partner haritası karşılaştırması yapma.",
+                career: "Kariyeri doğrulanmışsa MC/10. ev/yöneticisi, 2. ve 6. ev, Satürn, Jüpiter ve ilgili açılar üzerinden sembolik incele; çalışma tarzı, motivasyon, beceriler ve mesleki ortam tercihleri. Başarı garantisi verme.",
+                potential: "Potansiyel ve gelişimi doğrulanmışsa destekleyici/zorlayıcı açılar, element/nitelik dengeleri, ev temaları ve düğümler üzerinden ele al; göstergeler uydurma."
+            };
+            prompt = `LUNARA ASTROLOJİ ANALİZİ — NUMEROLOJİDEN BAĞIMSIZ
+Bu bir doğum haritası/astroloji raporudur; numeroloji raporu, genel fal veya tarot yorumu üretme. Yaşam yolu, ruh arzusu, kişisel yıl veya numeroloji terminolojisi kullanma.
+
+Girdi: Doğum tarihi: ${birthDate}. Doğum saati: ${birthTime || "Belirtilmedi"}. Doğum yeri: ${birthPlace}. İnceleme odağı: ${focusMap[focus]}.
+
+Doğruluk kuralı: Bu isteğe gerçek efemeris/harita hesaplama verileri eklenmedi. Gezegen burçlarını, derecelerini, yükseleni, evleri, açıları, MC/IC veya düğüm konumlarını hesaplanmış gibi ASLA uydurma. Doğum tarihi ve yeri bu değerleri hesapladığın anlamına gelmez. Doğum saati yoksa yükselen, evler ve saat hassasiyetine bağlı unsurları kesinleştirme. Bu durumda veri sınırını kısa ve açık belirt; doğrulanmış yerleşim iddiaları yerine astrolojik kavramları açıklayan, genel tematik yorum sun ve genel bilgi ile kişisel harita bulgusunu birbirinden ayır.
+
+Raporu numerolojiden tamamen farklı bir yapıda oluştur: Astrolojik yöntem/veri sınırı; temel eksen (Güneş/Ay/yükselen yalnızca doğrulanmışsa); düşünme ve iletişim (Merkür varsa); duygusal ve ilişki dinamikleri (Ay/Venüs/Mars varsa); eylem ve motivasyon (Mars varsa); ev/yaşam alanları (ev verisi varsa); açıların sentezi (açı verisi varsa); odak alanına özgü sentez; somut öz-keşif önerileri. En az 6 anlamlı bölüm yaz ancak veri yoksa başlık doldurmak için göstergeler uydurma.
+
+Göstergeleri tek tek listelemek yerine ilişkilerini ve odakla bağlantısını sentezle; tekrar eden fikirlerden kaçın. Doğal, derin ve özgün Türkçe kullan; klişe açılışları ve numerolojiye benzer genel kişilik şablonlarını kullanma. Kullanıcının ek sorusu: ${question || "Ek soru yok"}.
+
+Odak için özel yönerge: ${birthChartFocusInstructions[focus]}`;
+
         } else if (type === "generalfortune") {
             const focus = String(details.focus || "overall");
             const focusMap = { overall: "Genel enerji ve yaşam akışı", opportunities: "Fırsatlar ve yeni başlangıçlar", work: "İş ve maddi konular", social: "Sosyal çevre ve iletişim", nearFuture: "Yakın dönem temaları" };
