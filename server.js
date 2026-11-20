@@ -37,7 +37,10 @@ if (GMAIL_USER && GMAIL_APP_PASSWORD) {
         auth: {
             user: GMAIL_USER,
             pass: GMAIL_APP_PASSWORD
-        }
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 20000
     });
 }
 console.log('[GEMINI KONTROL]', GEMINI_API_KEY.trim() ? 'ANAHTAR YUKLENDI' : 'ANAHTAR YOK');
@@ -1425,8 +1428,11 @@ app.post("/api/auth/forgot-password", requireSameOrigin, forgotPasswordLimiter, 
     ).get(email);
 
     if (!user) {
+        console.info("[PASSWORD RESET] Hesap eşleşmesi bulunamadı.");
         return res.json({ success: true, message: genericMessage });
     }
+
+    console.info("[PASSWORD RESET] Hesap eşleşti; e-posta gönderimi başlatılıyor.");
 
     const token = crypto.randomBytes(32).toString("hex");
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
@@ -1474,13 +1480,20 @@ app.post("/api/auth/forgot-password", requireSameOrigin, forgotPasswordLimiter, 
             `
         });
 
+        console.info("[PASSWORD RESET] E-posta sunucusu gönderimi kabul etti.");
         return res.json({ success: true, message: genericMessage });
     } catch (error) {
         db.prepare(
             "DELETE FROM password_reset_tokens WHERE token_hash = ?"
         ).run(tokenHash);
 
-        console.error("Şifre sıfırlama e-postası gönderilemedi.");
+        console.error("[PASSWORD RESET] E-posta gönderimi başarısız.", JSON.stringify({
+            code: error?.code || null,
+            responseCode: error?.responseCode || null,
+            command: error?.command || null,
+            syscall: error?.syscall || null,
+            errno: error?.errno || null
+        }));
         return res.status(503).json({
             success: false,
             message: "E-posta gönderilemedi. Bir süre sonra tekrar deneyin."
