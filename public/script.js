@@ -377,12 +377,50 @@ async function loadAnalysisHistory() {
     }
 }
 
+function renderAnalysisMarkdown(markdown) {
+    const inline = (value) => escapeHtml(value)
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+        .replace(/__(.+?)__/g, "<strong>$1</strong>")
+        .replace(/\*(.+?)\*/g, "<em>$1</em>")
+        .replace(/_(.+?)_/g, "<em>$1</em>");
+    const lines = String(markdown || "").replace(/\r/g, "").split("\n");
+    const output = [];
+    let paragraph = [];
+    let listType = "";
+    let listItems = [];
+    const flushParagraph = () => {
+        if (paragraph.length) { output.push("<p>" + inline(paragraph.join(" ")) + "</p>"); paragraph = []; }
+    };
+    const flushList = () => {
+        if (listItems.length) { output.push("<" + listType + ">" + listItems.map(item => "<li>" + inline(item) + "</li>").join("") + "</" + listType + ">"); listItems = []; listType = ""; }
+    };
+    for (const raw of lines) {
+        const line = raw.trim();
+        if (!line) { flushParagraph(); flushList(); continue; }
+        const heading = line.match(/^(#{1,4})\s+(.+)$/);
+        if (heading) { flushParagraph(); flushList(); const level = Math.min(heading[1].length + 1, 5); output.push("<h" + level + ">" + inline(heading[2]) + "</h" + level + ">"); continue; }
+        if (/^(-{3,}|\*{3,}|_{3,})$/.test(line)) { flushParagraph(); flushList(); output.push("<hr>"); continue; }
+        const bullet = line.match(/^[-*+]\s+(.+)$/);
+        const numbered = line.match(/^\d+[.)]\s+(.+)$/);
+        if (bullet || numbered) {
+            flushParagraph();
+            const nextType = numbered ? "ol" : "ul";
+            if (listType && listType !== nextType) flushList();
+            listType = nextType; listItems.push((bullet || numbered)[1]); continue;
+        }
+        flushList();
+        paragraph.push(line.replace(/^>\s?/, ""));
+    }
+    flushParagraph(); flushList();
+    return output.join("");
+}
 function showAnalysisResult(analysis) {
     document.getElementById("analysisForm").classList.add("hidden");
     document.getElementById("analysisLoading").classList.add("hidden");
     document.getElementById("analysisResult").classList.remove("hidden");
     document.getElementById("analysisResultTitle").textContent = analysis.title;
-    document.getElementById("analysisResultContent").textContent = analysis.content;
+    document.getElementById("analysisResultContent").innerHTML = renderAnalysisMarkdown(analysis.content);
 }
 
 document.getElementById("analysisForm").addEventListener("submit", async event => {
