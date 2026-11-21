@@ -616,7 +616,7 @@ async function loadAdminPanel() {
     const statAnalyses = document.getElementById("statAnalyses");
 
     if (message) message.textContent = "Yönetici verileri yükleniyor…";
-    if (usersBody) usersBody.innerHTML = '<tr><td colspan="5">Yükleniyor…</td></tr>';
+    if (usersBody) usersBody.innerHTML = '<tr><td colspan="6">Yükleniyor…</td></tr>';
     if (analysesBody) analysesBody.innerHTML = '<tr><td colspan="6">Yükleniyor…</td></tr>';
 
     const [statsResult, usersResult, analysesResult] = await Promise.allSettled([
@@ -641,17 +641,14 @@ async function loadAdminPanel() {
         const users = usersResult.value.users || [];
         if (usersBody) {
             usersBody.innerHTML = users.map(user => `
-                <tr>
-                    <td>${user.id}</td>
-                    <td>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
-                    <td>${escapeHtml(user.email)}</td>
-                    <td>${escapeHtml(user.role)}</td>
-                    <td>${escapeHtml(user.createdAt)}</td>
-                </tr>
-            `).join("") || '<tr><td colspan="5">Henüz üye yok.</td></tr>';
+                <tr data-admin-user-row data-search="${escapeHtml((user.id+" "+user.firstName+" "+user.lastName+" "+user.email).toLowerCase())}">
+                    <td>${user.id}</td><td>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
+                    <td>${escapeHtml(user.email)}</td><td>${escapeHtml(user.role)}</td><td>${escapeHtml(user.createdAt)}</td>
+                    <td>${user.role==="member" ? `<button type="button" class="login-btn" data-admin-user-password="${user.id}">Şifre</button> <button type="button" class="member-delete-btn" data-admin-user-delete="${user.id}">Sil</button>` : "—"}</td>
+                </tr>`).join("") || '<tr><td colspan="6">Henüz üye yok.</td></tr>';
         }
     } else {
-        if (usersBody) usersBody.innerHTML = '<tr><td colspan="5">' +
+        if (usersBody) usersBody.innerHTML = '<tr><td colspan="6">' +
             escapeHtml(usersResult.reason.message || "Üye listesi yüklenemedi.") + '</td></tr>';
         errors.push("Üye listesi: " + usersResult.reason.message);
     }
