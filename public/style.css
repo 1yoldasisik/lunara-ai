@@ -1015,7 +1015,21 @@ button { cursor: pointer; }
     height: 1px !important;
     overflow: hidden !important;
 }
-\n/* Ortak analiz sonuç ekranı: Markdown blokları */\n.analysis-result-content { white-space: normal; }\n.analysis-result-content p { margin: 0 0 1.15em; }\n.analysis-result-content h2, .analysis-result-content h3, .analysis-result-content h4, .analysis-result-content h5 { color: var(--gold); line-height: 1.4; margin: 1.5em 0 .65em; font-family: "Cormorant Garamond", serif; }\n.analysis-result-content h2 { font-size: 1.55rem; }\n.analysis-result-content h3 { font-size: 1.35rem; }\n.analysis-result-content h4, .analysis-result-content h5 { font-size: 1.15rem; }\n.analysis-result-content strong { color: #f2d89b; font-weight: 700; }\n.analysis-result-content em { color: #e4d5f1; }\n.analysis-result-content ul, .analysis-result-content ol { padding-left: 1.5em; margin: 0 0 1.2em; }\n.analysis-result-content li { margin: .45em 0; }\n.analysis-result-content hr { border: 0; border-top: 1px solid rgba(217,182,111,.25); margin: 1.4em 0; }\n.analysis-result-content code { background: rgba(167,123,219,.15); padding: .12em .35em; border-radius: 4px; }\n
+
+/* Ortak analiz sonuç ekranı: Markdown blokları */
+.analysis-result-content { white-space: normal; }
+.analysis-result-content p { margin: 0 0 1.15em; }
+.analysis-result-content h2, .analysis-result-content h3, .analysis-result-content h4, .analysis-result-content h5 { color: var(--gold); line-height: 1.4; margin: 1.5em 0 .65em; font-family: "Cormorant Garamond", serif; }
+.analysis-result-content h2 { font-size: 1.55rem; }
+.analysis-result-content h3 { font-size: 1.35rem; }
+.analysis-result-content h4, .analysis-result-content h5 { font-size: 1.15rem; }
+.analysis-result-content strong { color: #f2d89b; font-weight: 700; }
+.analysis-result-content em { color: #e4d5f1; }
+.analysis-result-content ul, .analysis-result-content ol { padding-left: 1.5em; margin: 0 0 1.2em; }
+.analysis-result-content li { margin: .45em 0; }
+.analysis-result-content hr { border: 0; border-top: 1px solid rgba(217,182,111,.25); margin: 1.4em 0; }
+.analysis-result-content code { background: rgba(167,123,219,.15); padding: .12em .35em; border-radius: 4px; }
+
 .admin-member-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:12px 0}
 .admin-member-form input,.admin-user-search{width:100%;padding:12px;border:1px solid var(--border,#47345b);border-radius:10px;background:var(--panel,#1b1029);color:var(--text,#f5effb)}
 .admin-user-search{margin:8px 0 14px}
