@@ -524,6 +524,16 @@ function requireAdmin(req, res, next) {
     next();
 }
 
+function requireSuperAdmin(req, res, next) {
+    if (req.adminRole !== "super_admin") {
+        return res.status(403).json({
+            success: false,
+            message: "Bu işlem yalnızca Süper Admin tarafından yapılabilir."
+        });
+    }
+    next();
+}
+
 function writeAdminAudit(adminId, targetId, action, details) {
     db.prepare(`
         INSERT INTO admin_audit (admin_user_id, target_user_id, action, details)
@@ -1463,7 +1473,7 @@ app.get("/api/admin/analyses", requireAdmin, (req, res) => {
     res.json({ success: true, analyses: rows });
 });
 
-app.get("/api/admin/audit", requireAdmin, (req, res) => {
+app.get("/api/admin/audit", requireAdmin, requireSuperAdmin, (req, res) => {
     const rows = db.prepare(`
         SELECT aa.id, aa.action, aa.details, aa.created_at,
                admin.email AS admin_email,
