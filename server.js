@@ -520,6 +520,7 @@ function requireAdmin(req, res, next) {
     }
 
     req.adminUserId = user.id;
+    req.adminRole = user.role;
     next();
 }
 
@@ -1288,6 +1289,7 @@ app.get("/api/admin/stats", requireAdmin, (req, res) => {
             totalUsers: users.total || 0,
             members: users.members || 0,
             admins: users.admins || 0,
+            superAdmins: users.superAdmins || 0,
             totalAnalyses: analyses.total || 0
         }
     });
@@ -1304,6 +1306,7 @@ app.get("/api/admin/users", requireAdmin, (req, res) => {
 
     res.json({
         success: true,
+        canManageRoles: req.adminRole === "super_admin",
         users: users.map(user => ({
             id: user.id,
             firstName: user.first_name,
@@ -1315,6 +1318,55 @@ app.get("/api/admin/users", requireAdmin, (req, res) => {
     });
 });
 
+
+
+app.put("/api/admin/users/:id/role", requireSameOrigin, requireAdmin, (req, res, next) => {
+    try {
+        if (req.adminRole !== "super_admin") {
+            return res.status(403).json({ success: false, message: "Yönetici rolleri yalnızca Süper Admin tarafından değiştirilebilir." });
+        }
+
+        const id = Number(req.params.id);
+        const role = String(req.body?.role || "");
+        const allowedRoles = new Set(["member", "admin", "super_admin"]);
+        if (!Number.isSafeInteger(id) || id < 1 || !allowedRoles.has(role)) {
+            return res.status(400).json({ success: false, message: "Geçersiz kullanıcı veya rol." });
+        }
+        if (id === req.adminUserId) {
+            return res.status(403).json({ success: false, message: "Kendi rolünüzü bu panelden değiştiremezsiniz." });
+        }
+
+        const target = db.prepare("SELECT id, email, role, status FROM users WHERE id = ?").get(id);
+        if (!target || target.status === "deleted") {
+            return res.status(404).json({ success: false, message: "Kullanıcı bulunamadı." });
+        }
+        if (target.role === role) {
+            return res.json({ success: true, message: "Kullanıcının rolü zaten seçilen rol." });
+        }
+
+        const updateRole = db.transaction(() => {
+            if (target.role === "super_admin" && role !== "super_admin") {
+                const count = db.prepare("SELECT COUNT(*) AS total FROM users WHERE role = 'super_admin' AND status = 'active'").get().total;
+                if (count <= 1) {
+                    const error = new Error("Son aktif Süper Admin hesabının yetkisi kaldırılamaz.");
+                    error.status = 409;
+                    throw error;
+                }
+            }
+            db.prepare("UPDATE users SET role = ? WHERE id = ?").run(role, id);
+            writeAdminAudit(req.adminUserId, id, "role_change", JSON.stringify({
+                email: target.email,
+                previousRole: target.role,
+                newRole: role
+            }));
+        });
+        updateRole();
+        res.json({ success: true, message: "Kullanıcı rolü güncellendi." });
+    } catch (error) {
+        if (error.status) return res.status(error.status).json({ success: false, message: error.message });
+        next(error);
+    }
+});
 
 app.post("/api/admin/users", requireSameOrigin, requireAdmin, async (req, res, next) => {
     try {
