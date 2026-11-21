@@ -1034,3 +1034,6 @@ button { cursor: pointer; }
 .admin-member-form input,.admin-user-search{width:100%;padding:12px;border:1px solid var(--border,#47345b);border-radius:10px;background:var(--panel,#1b1029);color:var(--text,#f5effb)}
 .admin-user-search{margin:8px 0 14px}
 .admin-member-management [hidden]{display:none!important}
+
+/* Multilingual preview: compact language picker */
+.language-picker{position:relative;flex:0 0 auto;z-index:20}.language-picker>button{background:transparent;color:var(--text);border:1px solid rgba(217,182,111,.4);border-radius:8px;padding:8px 10px;font-size:12px}.language-menu{position:absolute;right:0;top:calc(100% + 8px);min-width:140px;background:var(--panel);border:1px solid rgba(217,182,111,.35);border-radius:10px;padding:5px;box-shadow:0 12px 30px rgba(0,0,0,.35)}.language-menu button{display:block;width:100%;text-align:left;padding:9px;border:0;border-radius:6px;background:transparent;color:var(--text);cursor:pointer}.language-menu button:hover{background:rgba(167,123,219,.2)}@media(max-width:900px){.header{flex-wrap:wrap}.language-picker{order:2}.header .nav{order:3;flex-basis:100%;overflow-x:auto;justify-content:flex-start}.header-actions,.member-actions{order:4}}
