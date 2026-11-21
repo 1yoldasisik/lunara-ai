@@ -1307,6 +1307,7 @@ app.get("/api/admin/users", requireAdmin, (req, res) => {
     res.json({
         success: true,
         canManageRoles: req.adminRole === "super_admin",
+        currentUserId: req.adminUserId,
         users: users.map(user => ({
             id: user.id,
             firstName: user.first_name,
