@@ -1314,6 +1314,87 @@ app.get("/api/admin/users", requireAdmin, (req, res) => {
     });
 });
 
+
+app.post("/api/admin/users", requireSameOrigin, requireAdmin, async (req, res, next) => {
+    try {
+        const firstName = String(req.body?.firstName || "").trim();
+        const lastName = String(req.body?.lastName || "").trim();
+        const birthDate = String(req.body?.birthDate || "").trim();
+        const email = String(req.body?.email || "").trim().toLowerCase();
+        const password = String(req.body?.password || "");
+        const credits = Number(req.body?.credits ?? 20);
+        if (firstName.length < 2 || firstName.length > 50 || lastName.length < 2 || lastName.length > 50)
+            return res.status(400).json({ success:false, message:"Ad ve soyad 2–50 karakter olmalıdır." });
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate) || Number.isNaN(Date.parse(birthDate)) || new Date(birthDate).toISOString().slice(0,10)!==birthDate || birthDate>new Date().toISOString().slice(0,10))
+            return res.status(400).json({ success:false, message:"Geçerli bir doğum tarihi girin." });
+        if (email.length>254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+            return res.status(400).json({ success:false, message:"Geçerli bir e-posta girin." });
+        if (password.length<10 || password.length>72 || !/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/[0-9]/.test(password))
+            return res.status(400).json({ success:false, message:"Şifre en az 10 karakter olmalı; büyük/küçük harf ve rakam içermelidir." });
+        if (!Number.isSafeInteger(credits) || credits<0 || credits>1000000)
+            return res.status(400).json({ success:false, message:"Kredi 0 ile 1.000.000 arasında olmalıdır." });
+        if (db.prepare("SELECT id FROM users WHERE email=?").get(email))
+            return res.status(409).json({ success:false, message:"Bu e-posta zaten kayıtlı." });
+        const hash=await bcrypt.hash(password,12);
+        const create=db.transaction(()=>{
+            const result=db.prepare("INSERT INTO users (first_name,last_name,birth_date,email,password_hash,credits,role,status) VALUES (?,?,?,?,?,?,'member','active')").run(firstName,lastName,birthDate,email,hash,credits);
+            const id=Number(result.lastInsertRowid);
+            writeAdminAudit(req.adminUserId,id,"member_create",JSON.stringify({email,credits}));
+            return id;
+        });
+        const id=create();
+        res.status(201).json({success:true,message:"Üye hesabı oluşturuldu.",user:{id,firstName,lastName,email,credits}});
+    } catch(error){ next(error); }
+});
+
+app.post("/api/admin/users/:id/password", requireSameOrigin, requireAdmin, async (req,res,next)=>{
+    try {
+        const id=Number(req.params.id), password=String(req.body?.password||"");
+        if(!Number.isInteger(id)||id<1) return res.status(400).json({success:false,message:"Geçersiz üye ID."});
+        if(password.length<10||password.length>72||!/[a-z]/.test(password)||!/[A-Z]/.test(password)||!/[0-9]/.test(password))
+            return res.status(400).json({success:false,message:"Şifre en az 10 karakter olmalı; büyük/küçük harf ve rakam içermelidir."});
+        const target=db.prepare("SELECT id,email,role,status FROM users WHERE id=?").get(id);
+        if(!target||target.status==="deleted") return res.status(404).json({success:false,message:"Üye bulunamadı."});
+        if(target.role==="admin") return res.status(403).json({success:false,message:"Yönetici şifresi bu araçla değiştirilemez."});
+        const hash=await bcrypt.hash(password,12);
+        const update=db.transaction(()=>{
+            db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash,id);
+            db.prepare("DELETE FROM password_reset_tokens WHERE user_id=?").run(id);
+            const rows=db.prepare("SELECT sid,sess FROM sessions").all();
+            const remove=db.prepare("DELETE FROM sessions WHERE sid=?");
+            for(const row of rows){try{if(JSON.parse(row.sess)?.userId===id)remove.run(row.sid);}catch{}}
+            writeAdminAudit(req.adminUserId,id,"member_password_reset",JSON.stringify({email:target.email}));
+        });
+        update();
+        res.json({success:true,message:"Üye şifresi değiştirildi; mevcut oturumları kapatıldı."});
+    }catch(error){next(error);}
+});
+
+app.delete("/api/admin/users/:id", requireSameOrigin, requireAdmin, (req,res,next)=>{
+    try {
+        const id=Number(req.params.id);
+        if(!Number.isInteger(id)||id<1) return res.status(400).json({success:false,message:"Geçersiz üye ID."});
+        if(id===req.adminUserId) return res.status(403).json({success:false,message:"Kendi yönetici hesabınızı buradan silemezsiniz."});
+        const target=db.prepare("SELECT * FROM users WHERE id=?").get(id);
+        if(!target||target.status==="deleted") return res.status(404).json({success:false,message:"Üye bulunamadı."});
+        if(target.role==="admin") return res.status(403).json({success:false,message:"Başka bir yönetici hesabı bu araçla silinemez."});
+        const pseudonymEmail="deleted-"+id+"-"+crypto.randomBytes(8).toString("hex")+"@deleted.invalid";
+        const transaction=db.transaction(()=>{
+            db.prepare("DELETE FROM analyses WHERE user_id=?").run(id);
+            db.prepare("DELETE FROM credit_transactions WHERE user_id=?").run(id);
+            db.prepare("DELETE FROM password_reset_tokens WHERE user_id=?").run(id);
+            const sessions=db.prepare("SELECT sid,sess FROM sessions").all();
+            const remove=db.prepare("DELETE FROM sessions WHERE sid=?");
+            for(const row of sessions){try{if(JSON.parse(row.sess)?.userId===id)remove.run(row.sid);}catch{}}
+            db.prepare("UPDATE admin_audit SET target_user_id=NULL WHERE target_user_id=?").run(id);
+            db.prepare("UPDATE users SET first_name='Silinmiş',last_name='Üye',birth_date='1900-01-01',email=?,password_hash=?,credits=0,bio='',status='deleted',role='member' WHERE id=?").run(pseudonymEmail,bcrypt.hashSync(crypto.randomBytes(32).toString("hex"),12),id);
+            writeAdminAudit(req.adminUserId,null,"member_delete",JSON.stringify({userId:id}));
+        });
+        transaction();
+        res.json({success:true,message:"Üye hesabı ve ilişkili analiz/kredi verileri silindi."});
+    }catch(error){next(error);}
+});
+
 app.get("/api/admin/analyses", requireAdmin, (req, res) => {
     const rows = db.prepare(`
         SELECT a.id, a.user_id, a.analysis_type, a.title, a.question, a.content,
