@@ -512,7 +512,7 @@ function requireAdmin(req, res, next) {
     const user = db.prepare("SELECT id, role, status FROM users WHERE id = ?")
         .get(req.session.userId);
 
-    if (!user || user.role !== "admin" || user.status !== "active") {
+    if (!user || !["admin", "super_admin"].includes(user.role) || user.status !== "active") {
         return res.status(403).json({
             success: false,
             message: "Bu alana erişim yetkiniz yok."
@@ -1274,7 +1274,8 @@ app.get("/api/admin/stats", requireAdmin, (req, res) => {
     const users = db.prepare(`
         SELECT COUNT(*) AS total,
                SUM(CASE WHEN role = 'member' THEN 1 ELSE 0 END) AS members,
-               SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) AS admins
+               SUM(CASE WHEN role IN ('admin', 'super_admin') THEN 1 ELSE 0 END) AS admins,
+               SUM(CASE WHEN role = 'super_admin' THEN 1 ELSE 0 END) AS superAdmins
         FROM users
         WHERE status != 'deleted'
     `).get();
@@ -1355,7 +1356,7 @@ app.post("/api/admin/users/:id/password", requireSameOrigin, requireAdmin, async
             return res.status(400).json({success:false,message:"Şifre en az 10 karakter olmalı; büyük/küçük harf ve rakam içermelidir."});
         const target=db.prepare("SELECT id,email,role,status FROM users WHERE id=?").get(id);
         if(!target||target.status==="deleted") return res.status(404).json({success:false,message:"Üye bulunamadı."});
-        if(target.role==="admin") return res.status(403).json({success:false,message:"Yönetici şifresi bu araçla değiştirilemez."});
+        if(["admin","super_admin"].includes(target.role)) return res.status(403).json({success:false,message:"Yönetici şifresi bu araçla değiştirilemez."});
         const hash=await bcrypt.hash(password,12);
         const update=db.transaction(()=>{
             db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash,id);
@@ -1377,7 +1378,7 @@ app.delete("/api/admin/users/:id", requireSameOrigin, requireAdmin, (req,res,nex
         if(id===req.adminUserId) return res.status(403).json({success:false,message:"Kendi yönetici hesabınızı buradan silemezsiniz."});
         const target=db.prepare("SELECT * FROM users WHERE id=?").get(id);
         if(!target||target.status==="deleted") return res.status(404).json({success:false,message:"Üye bulunamadı."});
-        if(target.role==="admin") return res.status(403).json({success:false,message:"Başka bir yönetici hesabı bu araçla silinemez."});
+        if(["admin","super_admin"].includes(target.role)) return res.status(403).json({success:false,message:"Yönetici hesabı bu araçla silinemez."});
         const pseudonymEmail="deleted-"+id+"-"+crypto.randomBytes(8).toString("hex")+"@deleted.invalid";
         const transaction=db.transaction(()=>{
             db.prepare("DELETE FROM analyses WHERE user_id=?").run(id);
