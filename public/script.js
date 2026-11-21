@@ -640,6 +640,7 @@ async function loadAdminPanel() {
     if (usersResult.status === "fulfilled") {
         const users = usersResult.value.users || [];
         const canManageRoles = usersResult.value.canManageRoles === true;
+        const currentUserId = Number(usersResult.value.currentUserId);
         if (usersBody) {
             usersBody.innerHTML = users.map(user => `
                 <tr data-admin-user-row data-search="${escapeHtml((user.id+" "+user.firstName+" "+user.lastName+" "+user.email).toLowerCase())}">
@@ -647,7 +648,7 @@ async function loadAdminPanel() {
                     <td>${escapeHtml(user.email)}</td><td>${escapeHtml(user.role)}</td><td>${escapeHtml(user.createdAt)}</td>
                     <td>
                         ${user.role==="member" ? `<button type="button" class="login-btn" data-admin-user-password="${user.id}">Şifre</button> <button type="button" class="member-delete-btn" data-admin-user-delete="${user.id}">Sil</button>` : ""}
-                        ${canManageRoles && user.id !== Number(window.lunaraCurrentUser?.id) ? `<select aria-label="Yeni rol" data-admin-role-select="${user.id}"><option value="member" ${user.role==="member"?"selected":""}>Üye</option><option value="admin" ${user.role==="admin"?"selected":""}>Yönetici</option><option value="super_admin" ${user.role==="super_admin"?"selected":""}>Süper Admin</option></select><button type="button" class="login-btn" data-admin-role-save="${user.id}">Rolü kaydet</button>` : ""}
+                        ${canManageRoles && user.id !== currentUserId ? `<select aria-label="Yeni rol" data-admin-role-select="${user.id}"><option value="member" ${user.role==="member"?"selected":""}>Üye</option><option value="admin" ${user.role==="admin"?"selected":""}>Yönetici</option><option value="super_admin" ${user.role==="super_admin"?"selected":""}>Süper Admin</option></select><button type="button" class="login-btn" data-admin-role-save="${user.id}">Rolü kaydet</button>` : ""}
                         ${user.role!=="member" ? "—" : ""}
                     </td>
                 </tr>`).join("") || '<tr><td colspan="6">Henüz üye yok.</td></tr>';
@@ -1102,6 +1103,30 @@ document.getElementById("adminUserSearch")?.addEventListener("input",event=>{
     document.querySelectorAll("[data-admin-user-row]").forEach(row=>row.hidden=!row.dataset.search.includes(q));
 });
 document.addEventListener("click",async event=>{
+    const roleSave = event.target.closest("[data-admin-role-save]");
+    if (roleSave) {
+        const id = Number(roleSave.dataset.adminRoleSave);
+        const select = document.querySelector(`[data-admin-role-select="${id}"]`);
+        const role = select?.value;
+        if (!Number.isSafeInteger(id) || !role) return;
+        const roleNames = { member: "Üye", admin: "Yönetici", super_admin: "Süper Admin" };
+        if (!confirm(`Bu hesabın rolünü "${roleNames[role]}" olarak değiştirmek istiyor musunuz?`)) return;
+        roleSave.disabled = true;
+        try {
+            const result = await apiRequest("/api/admin/users/" + id + "/role", {
+                method: "PUT",
+                body: JSON.stringify({ role })
+            });
+            showMessage(result.message || "Kullanıcı rolü güncellendi.");
+            await loadAdminPanel();
+        } catch (error) {
+            showMessage(error.message || "Rol değiştirilemedi.");
+        } finally {
+            roleSave.disabled = false;
+        }
+        return;
+    }
+
     const reset=event.target.closest("[data-admin-user-password]");
     if(reset){
         const id=reset.dataset.adminUserPassword,password=prompt("Üye için yeni şifre (10+ karakter, büyük/küçük harf ve rakam):");
