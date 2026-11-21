@@ -214,15 +214,31 @@
             <div class="admin-stat"><span>Analiz sayısı</span><strong id="statAnalyses">—</strong></div>
         </div>
 
-        <div class="admin-section">
+        
+        <div class="admin-section admin-member-management">
+            <div class="admin-section-title"><h3>Üye yönetimi</h3></div>
+            <form id="adminCreateMemberForm" class="admin-member-form">
+                <input name="firstName" placeholder="Ad" minlength="2" maxlength="50" required>
+                <input name="lastName" placeholder="Soyad" minlength="2" maxlength="50" required>
+                <input name="email" type="email" placeholder="E-posta" maxlength="254" required>
+                <input name="birthDate" type="date" aria-label="Doğum tarihi" required>
+                <input name="password" type="password" placeholder="Başlangıç şifresi" minlength="10" maxlength="72" required>
+                <input name="credits" type="number" placeholder="Başlangıç kredisi" value="20" min="0" max="1000000" required>
+                <button class="form-submit" type="submit">Üye oluştur</button>
+            </form>
+            <p id="adminMemberMessage" class="member-status" role="status"></p>
+            <input id="adminUserSearch" class="admin-user-search" type="search" placeholder="Üye ID, ad, soyad veya e-posta ile ara">
+        </div>
+
+<div class="admin-section">
             <div class="admin-section-title">
                 <h3>Üye listesi</h3>
                 <button class="login-btn" data-action="admin-refresh">Yenile</button>
             </div>
             <div class="admin-table-wrap">
                 <table class="admin-table">
-                    <thead><tr><th>ID</th><th>Üye</th><th>E-posta</th><th>Rol</th><th>Kayıt</th></tr></thead>
-                    <tbody id="adminUsersBody"><tr><td colspan="5">Yükleniyor…</td></tr></tbody>
+                    <thead><tr><th>ID</th><th>Üye</th><th>E-posta</th><th>Rol</th><th>Kayıt</th><th>İşlem</th></tr></thead>
+                    <tbody id="adminUsersBody"><tr><td colspan="6">Yükleniyor…</td></tr></tbody>
                 </table>
             </div>
         </div>

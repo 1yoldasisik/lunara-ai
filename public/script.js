@@ -616,7 +616,7 @@ async function loadAdminPanel() {
     const statAnalyses = document.getElementById("statAnalyses");
 
     if (message) message.textContent = "Yönetici verileri yükleniyor…";
-    if (usersBody) usersBody.innerHTML = '<tr><td colspan="5">Yükleniyor…</td></tr>';
+    if (usersBody) usersBody.innerHTML = '<tr><td colspan="6">Yükleniyor…</td></tr>';
     if (analysesBody) analysesBody.innerHTML = '<tr><td colspan="6">Yükleniyor…</td></tr>';
 
     const [statsResult, usersResult, analysesResult] = await Promise.allSettled([
@@ -641,17 +641,14 @@ async function loadAdminPanel() {
         const users = usersResult.value.users || [];
         if (usersBody) {
             usersBody.innerHTML = users.map(user => `
-                <tr>
-                    <td>${user.id}</td>
-                    <td>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
-                    <td>${escapeHtml(user.email)}</td>
-                    <td>${escapeHtml(user.role)}</td>
-                    <td>${escapeHtml(user.createdAt)}</td>
-                </tr>
-            `).join("") || '<tr><td colspan="5">Henüz üye yok.</td></tr>';
+                <tr data-admin-user-row data-search="${escapeHtml((user.id+" "+user.firstName+" "+user.lastName+" "+user.email).toLowerCase())}">
+                    <td>${user.id}</td><td>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
+                    <td>${escapeHtml(user.email)}</td><td>${escapeHtml(user.role)}</td><td>${escapeHtml(user.createdAt)}</td>
+                    <td>${user.role==="member" ? `<button type="button" class="login-btn" data-admin-user-password="${user.id}">Şifre</button> <button type="button" class="member-delete-btn" data-admin-user-delete="${user.id}">Sil</button>` : "—"}</td>
+                </tr>`).join("") || '<tr><td colspan="6">Henüz üye yok.</td></tr>';
         }
     } else {
-        if (usersBody) usersBody.innerHTML = '<tr><td colspan="5">' +
+        if (usersBody) usersBody.innerHTML = '<tr><td colspan="6">' +
             escapeHtml(usersResult.reason.message || "Üye listesi yüklenemedi.") + '</td></tr>';
         errors.push("Üye listesi: " + usersResult.reason.message);
     }
@@ -1088,3 +1085,31 @@ document.addEventListener("click", (event) => {
         openAuth("reset");
     }
 })();
+
+document.getElementById("adminCreateMemberForm")?.addEventListener("submit",async event=>{
+    event.preventDefault();const form=event.currentTarget,msg=document.getElementById("adminMemberMessage");
+    const payload=Object.fromEntries(new FormData(form).entries());payload.credits=Number(payload.credits);
+    try{const result=await apiRequest("/api/admin/users",{method:"POST",body:JSON.stringify(payload)});msg.textContent=result.message;form.reset();form.elements.credits.value="20";await loadAdminPanel();}
+    catch(error){msg.textContent=error.message||"Üye oluşturulamadı.";}
+});
+document.getElementById("adminUserSearch")?.addEventListener("input",event=>{
+    const q=event.target.value.trim().toLowerCase();
+    document.querySelectorAll("[data-admin-user-row]").forEach(row=>row.hidden=!row.dataset.search.includes(q));
+});
+document.addEventListener("click",async event=>{
+    const reset=event.target.closest("[data-admin-user-password]");
+    if(reset){
+        const id=reset.dataset.adminUserPassword,password=prompt("Üye için yeni şifre (10+ karakter, büyük/küçük harf ve rakam):");
+        if(password===null)return;
+        try{const result=await apiRequest("/api/admin/users/"+id+"/password",{method:"POST",body:JSON.stringify({password})});showMessage(result.message);await loadAdminPanel();}
+        catch(error){showMessage(error.message||"Şifre değiştirilemedi.");}
+    }
+    const del=event.target.closest("[data-admin-user-delete]");
+    if(del){
+        const id=del.dataset.adminUserDelete;
+        if(!confirm("Bu üyeyi, analiz geçmişini ve kredi kayıtlarını kalıcı olarak silmek istiyor musunuz? Bu işlem geri alınamaz."))return;
+        if(prompt("Silme işlemini onaylamak için SIL yazın:")!=="SIL")return;
+        try{const result=await apiRequest("/api/admin/users/"+id,{method:"DELETE"});showMessage(result.message);await loadAdminPanel();}
+        catch(error){showMessage(error.message||"Üye silinemedi.");}
+    }
+});
