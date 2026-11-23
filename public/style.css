@@ -1034,3 +1034,36 @@ button { cursor: pointer; }
 .admin-member-form input,.admin-user-search{width:100%;padding:12px;border:1px solid var(--border,#47345b);border-radius:10px;background:var(--panel,#1b1029);color:var(--text,#f5effb)}
 .admin-user-search{margin:8px 0 14px}
 .admin-member-management [hidden]{display:none!important}
+
+
+/* LUNARA ANDROID PHASE 1: MOBILE UI POLISH (isolated branch) */
+@media (max-width: 480px) {
+  body { overflow-x: hidden; }
+  .header { position: relative; gap: 10px; }
+  .header .nav { padding: 4px 0 8px; scroll-behavior: smooth; }
+  .header .nav a { white-space: nowrap; border-radius: 999px; border: 1px solid rgba(217,182,111,.12); }
+  .header-actions, .member-actions { width: 100%; justify-content: center; flex-wrap: wrap; }
+  .header-actions button, .member-actions button { min-height: 40px; }
+  .hero { padding: 36px 16px 32px; }
+  .hero h1 { max-width: 100%; line-height: 1.05; font-size: clamp(38px, 10vw, 50px); }
+  .hero-description { line-height: 1.7; }
+  .gold-btn { min-height: 44px; }
+  .cards { grid-template-columns: 1fr; gap: 12px; }
+  .feature-card { min-height: unset; padding: 20px; }
+  .feature-card p { font-size: 12px; line-height: 1.7; }
+  .section { padding-left: 16px; padding-right: 16px; }
+  .modal-overlay { padding: 8px; align-items: flex-start; }
+  .auth-modal, .analysis-modal, .member-modal, .admin-modal { max-height: calc(100dvh - 16px); margin: 0 auto; overflow-y: auto; overscroll-behavior: contain; }
+  .auth-modal input, .analysis-fields input, .analysis-fields select, .analysis-fields textarea, .member-form input, .member-form textarea { font-size: 16px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .analysis-result-content { padding: 14px; line-height: 1.8; }
+  .history-item-row { min-width: 0; }
+  .history-delete-button { padding: 0 10px; }
+  .footer { padding: 28px 16px; }
+}
+@media (max-width: 360px) {
+  .header .nav a { padding: 7px 9px; font-size: 10px; }
+  .login-btn, .register-btn { min-height: 40px; padding: 9px 12px; }
+  .hero h1 { font-size: 38px; }
+  .section-heading h2 { font-size: 33px; }
+}
