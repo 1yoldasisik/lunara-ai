@@ -217,10 +217,14 @@
 
         
         <div class="admin-section admin-member-management">
-            <div class="admin-section-title"><h3>Yetki yönetimi</h3><span class="admin-hint">Yalnızca Süper Admin</span></div>
+            <div class="admin-section-title">
+                <h3>Yetki yönetimi</h3>
+                <span class="admin-hint">Yalnızca Süper Admin</span>
+            </div>
             <p class="admin-hint">Üye, Yönetici ve Süper Admin rollerini buradan yönetebilirsiniz. Yönetici rol atayamaz.</p>
         </div>
 
+        <div class="admin-section">
             <div class="admin-section-title"><h3>Üye yönetimi</h3></div>
             <form id="adminCreateMemberForm" class="admin-member-form">
                 <input name="firstName" placeholder="Ad" minlength="2" maxlength="50" required>
@@ -235,7 +239,7 @@
             <input id="adminUserSearch" class="admin-user-search" type="search" placeholder="Üye ID, ad, soyad veya e-posta ile ara">
         </div>
 
-<div class="admin-section">
+        <div class="admin-section">
             <div class="admin-section-title">
                 <h3>Üye listesi</h3>
                 <button class="login-btn" data-action="admin-refresh">Yenile</button>
@@ -248,14 +252,27 @@
             </div>
         </div>
 
+        <div class="admin-section" id="adminEmailSection">
+            <div class="admin-section-title"><h3>Üyelere e-posta gönder</h3></div>
+            <p class="admin-hint">Listeden üyeleri seçin veya tüm aktif üyeleri hedefleyin.</p>
+            <label class="admin-email-all"><input id="adminEmailAll" type="checkbox"> Tüm aktif üyelere gönder</label>
+            <form id="adminEmailForm" class="admin-email-form">
+                <input id="adminEmailSubject" maxlength="200" placeholder="E-posta konusu" required>
+                <textarea id="adminEmailMessage" rows="5" maxlength="10000" placeholder="Mesaj" required></textarea>
+                <button class="form-submit" type="submit">E-posta gönder</button>
+            </form>
+            <p id="adminEmailStatus" class="member-status" role="status"></p>
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead><tr><th>Tarih</th><th>Alıcı</th><th>Konu</th><th>Durum</th></tr></thead>
+                    <tbody id="adminEmailLogBody"><tr><td colspan="4">Geçmiş yükleniyor…</td></tr></tbody>
+                </table>
+            </div>
+        </div>
 
         <div class="admin-section">
             <div class="admin-section-title">
-                
-        <div class="admin-section" id="adminEmailSection"><div class="admin-section-title"><h3>Üyelere e-posta gönder</h3></div><p class="admin-hint">Listeden üyeleri seçin veya tüm aktif üyeleri hedefleyin.</p>
-<label style="display:flex;gap:8px;align-items:center;margin:10px 0"><input id="adminEmailAll" type="checkbox"> Tüm aktif üyelere gönder</label><form id="adminEmailForm" style="display:grid;gap:10px"><input id="adminEmailSubject" maxlength="200" placeholder="E-posta konusu" required><textarea id="adminEmailMessage" rows="5" maxlength="10000" placeholder="Mesaj" required></textarea><button class="form-submit" type="submit">E-posta gönder</button></form><p id="adminEmailStatus" class="member-status" role="status"></p>
-<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Tarih</th><th>Alıcı</th><th>Konu</th><th>Durum</th></tr></thead><tbody id="adminEmailLogBody"><tr><td colspan="4">Geçmiş yükleniyor…</td></tr></tbody></table></div></div>
-\n<h3>Analizler ve yorumlar</h3>
+                <h3>Analizler ve yorumlar</h3>
                 <span class="admin-hint">Son 100 kayıt</span>
             </div>
             <div class="admin-table-wrap">
@@ -276,7 +293,7 @@
                     <h4>Kullanıcının sorusu / notu</h4>
                     <pre id="adminAnalysisDetailQuestion" class="admin-analysis-content"></pre>
                 </div>
-<pre id="adminAnalysisDetailContent" class="admin-analysis-content"></pre>
+                <pre id="adminAnalysisDetailContent" class="admin-analysis-content"></pre>
             </div>
         </div>
     </section>
