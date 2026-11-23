@@ -1479,7 +1479,8 @@ let sent=0,failed=0;for(const u of users){let state="sent",err="";try{await mail
 db.prepare("INSERT INTO admin_email_log(admin_user_id,recipient_email,recipient_user_id,subject,status,error) VALUES(?,?,?,?,?,?)").run(req.adminUserId,u.email,u.id,subject,state,err);}
 writeAdminAudit(req.adminUserId,null,"admin_email_send",JSON.stringify({subject,recipientCount:users.length,sent,failed}));res.json({success:true,message:"Gönderim tamamlandı.",recipientCount:users.length,sent,failed});}catch(e){next(e);}});
 app.get("/api/admin/email/log",requireAdmin,(req,res)=>res.json({success:true,logs:db.prepare("SELECT recipient_email,subject,status,error,created_at FROM admin_email_log ORDER BY id DESC LIMIT 100").all()}));
-\napp.get("/api/admin/analyses", requireAdmin, (req, res) => {
+
+app.get("/api/admin/analyses", requireAdmin, (req, res) => {
     const rows = db.prepare(`
         SELECT a.id, a.user_id, a.analysis_type, a.title, a.question, a.content,
                a.created_at,
