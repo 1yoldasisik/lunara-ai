@@ -250,7 +250,11 @@
 
         <div class="admin-section">
             <div class="admin-section-title">
-                <h3>Analizler ve yorumlar</h3>
+                
+        <div class="admin-section" id="adminEmailSection"><div class="admin-section-title"><h3>Üyelere e-posta gönder</h3></div><p class="admin-hint">Listeden üyeleri seçin veya tüm aktif üyeleri hedefleyin.</p>
+<label style="display:flex;gap:8px;align-items:center;margin:10px 0"><input id="adminEmailAll" type="checkbox"> Tüm aktif üyelere gönder</label><form id="adminEmailForm" style="display:grid;gap:10px"><input id="adminEmailSubject" maxlength="200" placeholder="E-posta konusu" required><textarea id="adminEmailMessage" rows="5" maxlength="10000" placeholder="Mesaj" required></textarea><button class="form-submit" type="submit">E-posta gönder</button></form><p id="adminEmailStatus" class="member-status" role="status"></p>
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Tarih</th><th>Alıcı</th><th>Konu</th><th>Durum</th></tr></thead><tbody id="adminEmailLogBody"><tr><td colspan="4">Geçmiş yükleniyor…</td></tr></tbody></table></div></div>
+\n<h3>Analizler ve yorumlar</h3>
                 <span class="admin-hint">Son 100 kayıt</span>
             </div>
             <div class="admin-table-wrap">
