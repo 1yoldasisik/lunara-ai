@@ -644,7 +644,7 @@ async function loadAdminPanel() {
         if (usersBody) {
             usersBody.innerHTML = users.map(user => `
                 <tr data-admin-user-row data-search="${escapeHtml((user.id+" "+user.firstName+" "+user.lastName+" "+user.email).toLowerCase())}">
-                    <td>${user.id}</td><td>${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
+                    <td>${user.id}</td><td>${user.role==="member" ? `<input type="checkbox" data-admin-email-recipient="${user.id}" aria-label="Alıcı seç"> ` : ""}${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</td>
                     <td>${escapeHtml(user.email)}</td><td>${escapeHtml(user.role)}</td><td>${escapeHtml(user.createdAt)}</td>
                     <td>
                         ${user.role==="member" ? `<button type="button" class="login-btn" data-admin-user-password="${user.id}">Şifre</button> <button type="button" class="member-delete-btn" data-admin-user-delete="${user.id}">Sil</button>` : ""}
@@ -1143,3 +1143,7 @@ document.addEventListener("click",async event=>{
         catch(error){showMessage(error.message||"Üye silinemedi.");}
     }
 });
+
+async function loadAdminEmailLog(){const b=document.getElementById("adminEmailLogBody");if(!b)return;try{const r=await apiRequest("/api/admin/email/log",{method:"GET",headers:{}});b.innerHTML=(r.logs||[]).map(x=>`<tr><td>${escapeHtml(x.created_at)}</td><td>${escapeHtml(x.recipient_email)}</td><td>${escapeHtml(x.subject)}</td><td>${escapeHtml(x.status==="sent"?"Gönderildi":"Başarısız")}${x.error?" — "+escapeHtml(x.error):""}</td></tr>`).join("")||'<tr><td colspan="4">Henüz kayıt yok.</td></tr>';}catch(e){b.innerHTML='<tr><td colspan="4">Geçmiş yüklenemedi.</td></tr>';}}
+document.getElementById("adminEmailForm")?.addEventListener("submit",async e=>{e.preventDefault();const all=document.getElementById("adminEmailAll").checked,ids=[...document.querySelectorAll("[data-admin-email-recipient]:checked")].map(x=>Number(x.dataset.adminEmailRecipient)),subject=document.getElementById("adminEmailSubject").value.trim(),message=document.getElementById("adminEmailMessage").value.trim();if(!all&&!ids.length){showMessage("Üye seçin veya tüm üyeleri işaretleyin.");return;}if(!confirm((all?"tüm aktif üyeler":ids.length+" seçili üye")+" için gönderim başlatılsın mı?"))return;const status=document.getElementById("adminEmailStatus");status.textContent="Gönderim deneniyor…";try{const r=await apiRequest("/api/admin/email/send",{method:"POST",body:JSON.stringify({sendToAll:all,userIds:ids,subject,message})});status.textContent="Alıcı: "+r.recipientCount+" • Başarılı: "+r.sent+" • Başarısız: "+r.failed;showMessage(status.textContent);await loadAdminEmailLog();}catch(err){status.textContent=err.message||"Gönderim başarısız.";showMessage(status.textContent);}});
+document.getElementById("adminEmailAll")?.addEventListener("change",()=>document.querySelectorAll("[data-admin-email-recipient]").forEach(x=>x.checked=false));
