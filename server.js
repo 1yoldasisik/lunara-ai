@@ -127,6 +127,13 @@ db.exec(`
 
     CREATE INDEX IF NOT EXISTS idx_admin_audit_created
     ON admin_audit(created_at);
+
+    CREATE TABLE IF NOT EXISTS admin_email_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, admin_user_id INTEGER NOT NULL, recipient_email TEXT NOT NULL,
+        recipient_user_id INTEGER, subject TEXT NOT NULL, status TEXT NOT NULL, error TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (admin_user_id) REFERENCES users(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_admin_email_log_created ON admin_email_log(created_at);
 `);
 
 const analysisColumns = db.prepare("PRAGMA table_info(analyses)").all();
@@ -1459,7 +1466,20 @@ app.delete("/api/admin/users/:id", requireSameOrigin, requireAdmin, (req,res,nex
     }catch(error){next(error);}
 });
 
-app.get("/api/admin/analyses", requireAdmin, (req, res) => {
+
+const adminEmailSendLimiter = rateLimit({ windowMs: 60*60*1000, limit: 10, standardHeaders: "draft-8", legacyHeaders: false, message: {success:false,message:"E-posta gönderim sınırına ulaşıldı."} });
+app.post("/api/admin/email/send",requireSameOrigin,requireAdmin,adminEmailSendLimiter,async(req,res,next)=>{try{
+const subject=String(req.body?.subject||"").trim(),message=String(req.body?.message||"").trim(),all=req.body?.sendToAll===true,ids=Array.isArray(req.body?.userIds)?req.body.userIds.map(Number):[];
+if(!subject||subject.length>200||!message||message.length>10000)return res.status(400).json({success:false,message:"Konu ve mesaj zorunludur (konu 200, mesaj 10.000 karakter)."});
+if(!all&&(!ids.length||ids.length>200||ids.some(id=>!Number.isSafeInteger(id)||id<1)))return res.status(400).json({success:false,message:"En az bir üye seçin (en fazla 200)."});
+const users=all?db.prepare("SELECT id,email FROM users WHERE role='member' AND status='active' ORDER BY id").all():db.prepare("SELECT id,email FROM users WHERE role='member' AND status='active' AND id IN ("+ids.map(()=>"?").join(",")+")").all(...ids);
+if(!users.length)return res.status(400).json({success:false,message:"Gönderilecek aktif üye bulunamadı."});if(users.length>5000)return res.status(400).json({success:false,message:"Toplu gönderim en fazla 5.000 alıcı olabilir."});
+if(!mailTransporter)return res.status(503).json({success:false,message:"E-posta sağlayıcısı yapılandırılmadı; e-posta gönderilmedi.",recipientCount:users.length});
+let sent=0,failed=0;for(const u of users){let state="sent",err="";try{await mailTransporter.sendMail({from:GMAIL_USER,to:u.email,subject,text:message});sent++;}catch(e){state="failed";err=String(e.message||"Gönderim hatası").slice(0,500);failed++;}
+db.prepare("INSERT INTO admin_email_log(admin_user_id,recipient_email,recipient_user_id,subject,status,error) VALUES(?,?,?,?,?,?)").run(req.adminUserId,u.email,u.id,subject,state,err);}
+writeAdminAudit(req.adminUserId,null,"admin_email_send",JSON.stringify({subject,recipientCount:users.length,sent,failed}));res.json({success:true,message:"Gönderim tamamlandı.",recipientCount:users.length,sent,failed});}catch(e){next(e);}});
+app.get("/api/admin/email/log",requireAdmin,(req,res)=>res.json({success:true,logs:db.prepare("SELECT recipient_email,subject,status,error,created_at FROM admin_email_log ORDER BY id DESC LIMIT 100").all()}));
+\napp.get("/api/admin/analyses", requireAdmin, (req, res) => {
     const rows = db.prepare(`
         SELECT a.id, a.user_id, a.analysis_type, a.title, a.question, a.content,
                a.created_at,
